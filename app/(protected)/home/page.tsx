@@ -23,6 +23,8 @@ import { Heading } from "@/components/ui/heading";
 import { Skeleton } from "@/components/ui/skeleton";
 import NotificationItem from "./components/notification-item";
 import { markNotificationAsRead } from "./actions";
+import ContributionCalendar from "./components/contribution-calendar";
+import CourseStreak from './components/course-streak'
 
 // Dashboard Components with Data Fetching
 async function StatsCards() {
@@ -44,6 +46,24 @@ async function StatsCards() {
   const userCourses = await prisma.userCourse.findMany({
     where: { userId: session.user.id },
     take: 1,
+  });
+
+  // Fetch module progress data
+  const moduleProgress = await prisma.moduleProgress.findMany({
+    where: {
+      module: {
+        course: {
+          userCourses: {
+            some: {
+              userId: session.user.id
+            }
+          }
+        }
+      }
+    },
+    orderBy: {
+      completedAt: 'desc'
+    }
   });
   
   return (
@@ -86,6 +106,11 @@ async function StatsCards() {
         </div>
         <div className="absolute -right-3 -top-3 h-24 w-24 rounded-full bg-amber-500/10 blur-2xl" />
       </div>
+
+      {/* Contribution Calendar */}
+      <div className="md:col-span-3">
+        <ContributionCalendar moduleProgress={moduleProgress} />
+      </div>
     </div>
   );
 }
@@ -120,7 +145,11 @@ async function RecentCourses() {
     include: {
       course: {
         include: {
-          modules: true
+          modules: {
+            include: {
+              moduleProgress: true
+            }
+          }
         }
       }
     },
@@ -149,60 +178,68 @@ async function RecentCourses() {
       
       <div className="space-y-4">
         {userCourses.length > 0 ? (
-          userCourses.map((userCourse) => (
-            <div 
-              key={userCourse.id}
-              className="group relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-4 transition-all hover:border-zinc-300 hover:shadow-lg dark:border-zinc-800 dark:bg-zinc-900/70 dark:hover:border-zinc-700"
-            >
-              <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl">
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 via-sky-300 to-blue-500 opacity-0 blur-xl transition-all duration-500 group-hover:opacity-20" />
-              </div>
-              
-              <div className="flex flex-col sm:flex-row gap-4">
-                {userCourse.course.modules[0]?.thumbnailUrl ? (
-                  <div className="w-full sm:w-32 h-24 overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-800">
-                    <img 
-                      src={userCourse.course.modules[0].thumbnailUrl} 
-                      alt={userCourse.course.name}
-                      className="h-full w-full object-cover" 
-                    />
-                  </div>
-                ) : (
-                  <div className="flex w-full sm:w-32 h-24 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800">
-                    <BookOpen className="h-8 w-8 text-zinc-400" />
-                  </div>
-                )}
+          userCourses.map((userCourse) => {
+            // Get all module progress for this course
+            const courseModuleProgress = userCourse.course.modules.flatMap(
+              module => module.moduleProgress || []
+            );
+
+            return (
+              <div 
+                key={userCourse.id}
+                className="group relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-4 transition-all hover:border-zinc-300 hover:shadow-lg dark:border-zinc-800 dark:bg-zinc-900/70 dark:hover:border-zinc-700"
+              >
+                <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl">
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 via-sky-300 to-blue-500 opacity-0 blur-xl transition-all duration-500 group-hover:opacity-20" />
+                </div>
                 
-                <div className="flex-1">
-                  <div className="mb-2">
-                    <Heading level={4} className="font-semibold text-lg">
-                      {userCourse.course.name}
-                    </Heading>
-                    <Text className="line-clamp-2 text-sm text-zinc-500 dark:text-zinc-400">
-                      {userCourse.course.description || "No description available"}
-                    </Text>
-                  </div>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  {userCourse.course.modules[0]?.thumbnailUrl ? (
+                    <div className="w-full sm:w-32 h-24 overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-800">
+                      <img 
+                        src={userCourse.course.modules[0].thumbnailUrl} 
+                        alt={userCourse.course.name}
+                        className="h-full w-full object-cover" 
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex w-full sm:w-32 h-24 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800">
+                      <BookOpen className="h-8 w-8 text-zinc-400" />
+                    </div>
+                  )}
                   
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3 text-xs text-zinc-500 dark:text-zinc-400">
-                      <div className="flex items-center gap-1">
-                        <CheckCircle2 size={14} />
-                        <span>{userCourse.course.modules.length} modules</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock size={14} />
-                        <span>Last updated {new Date(userCourse.updatedAt).toLocaleDateString()}</span>
-                      </div>
+                  <div className="flex-1">
+                    <div className="mb-2">
+                      <Heading level={4} className="font-semibold text-lg">
+                        {userCourse.course.name}
+                      </Heading>
+                      <Text className="line-clamp-2 text-sm text-zinc-500 dark:text-zinc-400">
+                        {userCourse.course.description || "No description available"}
+                      </Text>
                     </div>
                     
-                    <Button href={`/courses/${userCourse.courseId}`} color="light" className="h-8 px-3 text-xs">
-                      Continue <ChevronRight className="ml-1 h-3 w-3" />
-                    </Button>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 text-xs text-zinc-500 dark:text-zinc-400">
+                        <div className="flex items-center gap-1">
+                          <CheckCircle2 size={14} />
+                          <span>{userCourse.course.modules.length} modules</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Clock size={14} />
+                          <span>Last updated {new Date(userCourse.updatedAt).toLocaleDateString()}</span>
+                        </div>
+                        <CourseStreak moduleProgress={courseModuleProgress} />
+                      </div>
+                      
+                      <Button href={`/courses/${userCourse.courseId}`} color="light" className="h-8 px-3 text-xs">
+                        Continue <ChevronRight className="ml-1 h-3 w-3" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         ) : (
           <div className="flex flex-col items-center justify-center py-10 text-center rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900/70">
             <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800">
