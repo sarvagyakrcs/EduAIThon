@@ -1,6 +1,6 @@
 "use client"
 
-import { Module, ModuleType } from '@prisma/client'
+import { Module, ModuleType, ModuleProgress } from '@prisma/client'
 import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Heading, Subheading } from '@/components/ui/heading'
@@ -10,15 +10,75 @@ import { Divider } from '@/components/ui/divider'
 import { SparkleIcon } from '@/components/ui/sparkle-icon'
 import { Play, Clock, FileText, CheckCircle2, BookOpen, ChevronRight, BarChart2 } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { Switch, SwitchField } from '@/components/ui/switch'
+import { updateModuleProgress } from '@/actions/course/update-module-progress'
+import toast from 'react-hot-toast'
+
+type ModuleWithProgress = Module & {
+  moduleProgress?: ModuleProgress | null
+}
 
 type Props = {
-    modules: Module[]
+  modules: ModuleWithProgress[]
 }
 
 const CourseList = ({ modules }: Props) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [localModules, setLocalModules] = useState<ModuleWithProgress[]>(modules);
+  const [updatingProgress, setUpdatingProgress] = useState<string | null>(null);
 
-  if (modules.length === 0) {
+  const handleProgressUpdate = async (moduleId: string, completed: boolean) => {
+    // Optimistic update
+    setLocalModules(prevModules => 
+      prevModules.map(module => {
+        if (module.id === moduleId) {
+          const updatedModule = { ...module };
+          if (!updatedModule.moduleProgress) {
+            updatedModule.moduleProgress = {
+              id: 'temp-id',
+              moduleId: moduleId,
+              completed,
+              completedAt: completed ? new Date() : null
+            };
+          } else {
+            updatedModule.moduleProgress = {
+              ...updatedModule.moduleProgress,
+              completed,
+              completedAt: completed ? new Date() : null
+            };
+          }
+          return updatedModule;
+        }
+        return module;
+      })
+    );
+
+    try {
+      await updateModuleProgress(moduleId, completed);
+    } catch (error) {
+      setLocalModules(prevModules => 
+        prevModules.map(module => {
+          if (module.id === moduleId && module.moduleProgress) {
+            return {
+              ...module,
+              moduleProgress: {
+                ...module.moduleProgress,
+                completed: !completed,
+                completedAt: !completed ? new Date() : null
+              }
+            };
+          }
+          return module;
+        })
+      );
+      toast.error('Failed to update progress');
+    }
+  };
+
+  const completedModules = localModules.filter(m => m.moduleProgress?.completed).length;
+  const progressPercentage = Math.round((completedModules / localModules.length) * 100);
+
+  if (localModules.length === 0) {
     return (
       <div className="rounded-xl border border-zinc-200 bg-white/50 p-4 sm:p-8 backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-900/50">
         <div className="flex flex-col items-center justify-center text-center">
@@ -48,22 +108,24 @@ const CourseList = ({ modules }: Props) => {
             <span>Course Content</span>
           </Badge>
           <Heading className="text-lg sm:text-xl font-bold">Course Modules</Heading>
-          <Text className="text-sm sm:text-base">Complete all {modules.length} modules to finish this course</Text>
+          <Text className="text-sm sm:text-base">
+            {completedModules} of {localModules.length} modules completed ({progressPercentage}%)
+          </Text>
         </div>
         <Badge color="zinc" className="self-start sm:self-auto rounded-full px-3 py-1 sm:px-4 sm:py-1.5 text-xs sm:text-sm">
-          {modules.length} {modules.length === 1 ? 'Module' : 'Modules'}
+          {localModules.length} {localModules.length === 1 ? 'Module' : 'Modules'}
         </Badge>
       </div>
 
       <Divider />
 
       <div className="grid gap-3 sm:gap-4">
-        {modules.map((module, index) => {
+        {localModules.map((module, index) => {
           const isHovered = hoveredIndex === index;
           const moduleIcon = getModuleIcon(module.moduleType);
 
           return (
-            <motion.div 
+            <motion.div
               key={module.id}
               className="group relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-1 transition-all duration-300 hover:border-zinc-300 hover:shadow-lg dark:border-zinc-800 dark:bg-zinc-900/70 dark:hover:border-zinc-700"
               initial={{ opacity: 0, y: 20 }}
@@ -74,7 +136,7 @@ const CourseList = ({ modules }: Props) => {
             >
               {/* Background animations */}
               <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl">
-                <div 
+                <div
                   className={`absolute -inset-0.5 bg-gradient-to-r ${getModuleGradient(module.moduleType)} opacity-0 blur-xl transition-all duration-500 group-hover:opacity-20`}
                 />
               </div>
@@ -109,11 +171,11 @@ const CourseList = ({ modules }: Props) => {
                       {module.moduleType}
                     </Badge>
                   </div>
-                  
+
                   {module.description && (
                     <Text className="mb-2 sm:mb-3 line-clamp-2 text-sm sm:text-base">{module.description}</Text>
                   )}
-                  
+
                   <div className="mt-2 sm:mt-3 flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
                     <div className="flex items-center gap-1">
                       <Clock size={14} />
@@ -135,7 +197,7 @@ const CourseList = ({ modules }: Props) => {
                 </div>
 
                 {/* Action button with hover effect */}
-                <div className="w-full sm:w-auto sm:ml-2 flex-shrink-0 self-center mt-3 sm:mt-0">
+                <div className="w-full sm:w-auto sm:ml-2 flex-shrink-0 flex items-center justify-center self-center mt-3 sm:mt-0">
                   <motion.div
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
@@ -148,6 +210,15 @@ const CourseList = ({ modules }: Props) => {
                       <span className="absolute inset-x-0 -bottom-px block h-px w-full bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 transition duration-500 group-hover/btn:opacity-100" />
                     </Button>
                   </motion.div>
+                  <SwitchField>
+                    <Switch 
+                      defaultChecked={module.moduleProgress?.completed} 
+                      onChange={(checked) => handleProgressUpdate(module.id, checked)}
+                      disabled={updatingProgress === module.id}
+                      name={`module-progress-${module.id}`} 
+                      color="sky" 
+                    />
+                  </SwitchField>
                 </div>
               </div>
             </motion.div>

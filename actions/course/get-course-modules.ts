@@ -23,7 +23,11 @@ export const getCourseModules = async (courseId: string) => {
             id: courseId
         },
         include: {
-            modules: true
+            modules: {
+                include: {
+                    moduleProgress: true
+                }
+            }
         }
     })
     redis.set(redisKey, JSON.stringify(course?.modules))

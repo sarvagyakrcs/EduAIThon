@@ -92,11 +92,19 @@ model Module {
   moduleType   ModuleType @default(VIDEO)
   quiz         Quiz?
   content      String?
+  moduleProgress ModuleProgress?
 
   course   Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
   courseId String
 }
 
+model ModuleProgress {
+  id String @id @default(cuid())
+  moduleId String @unique
+  module   Module @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  completed Boolean @default(false)
+  completedAt DateTime?
+}
 enum ModuleType {
   VIDEO
   TEXT
