@@ -1,11 +1,11 @@
-import React from 'react'
+import { ThemeToggle } from "@/components/global/mode-toggle";
+import { Button } from "@/components/ui/button";
 
-const Page = () => {
+export default function Page() {
   return (
-    <div className='flex flex-col items-center justify-center h-screen'>
-      asds
+    <div className="flex h-screen items-center justify-center w-screen gap-3">
+      <ThemeToggle />
+      <Button>asds</Button>
     </div>
   )
 }
-
-export default Page
