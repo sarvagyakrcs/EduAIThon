@@ -7,83 +7,41 @@ import { Button } from "@/components/ui/button";
 import { PROJECT_NAME } from "@/metadata";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import toast from "react-hot-toast";
-import {
-  RegisterSchema,
-  RegisterSchemaType,
-} from "@/schema/auth/register-schema";
 import { useMutation } from "@tanstack/react-query";
-import {Register} from "@/actions/auth";
+import {Login} from "@/actions/auth";
+import { LoginSchema, LoginSchemaType } from "@/schema/auth/login-schema";
 
-export default function FormSignUp() {
+export default function FormSignIn() {
   const {
     handleSubmit,
     formState: { errors },
     register,
-    reset,
-  } = useForm<RegisterSchemaType>({
-    resolver: zodResolver(RegisterSchema),
+    reset
+  } = useForm<LoginSchemaType>({
+    resolver: zodResolver(LoginSchema),
   });
 
   const {
-    mutate: registerUser,
+    mutate: login,
     isPending
   } = useMutation({
     mutationKey: ['register'],
-    mutationFn: Register,
-    onMutate: () => {
-      toast.loading("Creating your account", { id: "register" });
-    },
-    onSuccess: (data) => {
-      toast.success(data.success, { id: "register" });
+    mutationFn: Login,
+    onSuccess: () => {
       reset();
-    },
-    onError: () => {
-      toast.error("Something went wrong", { id: "register" });
     }
   })
 
-  const onSubmit = (data: RegisterSchemaType) => {
-    registerUser(data);
+  const onSubmit = (data: LoginSchemaType) => {
+    login(data);
   };
   return (
     <div className="shadow-input mx-auto w-full max-w-md rounded-none p-4 md:p-8">
-      <h2 className="text-xl font-bold">Welcome to {PROJECT_NAME}</h2>
+      <h2 className="text-xl font-bold">Welcome back to {PROJECT_NAME}</h2>
       <p className="mt-2 max-w-sm text-sm">
-        Sign Up to {PROJECT_NAME.toLocaleLowerCase()} if you can because we
-        don&apos;t have a login flow yet
+        Login to your precious {PROJECT_NAME.toLocaleLowerCase()} account and start your journey.
       </p>
       <form className="mt-8" onSubmit={handleSubmit(onSubmit)}>
-        <div className="flex flex-col space-y-2 md:flex-row md:space-y-0 md:space-x-2">
-          <Field className="w-full">
-            <Label htmlFor="firstname">First name</Label>
-            <Input
-              {...register("firstName")}
-              id="firstname"
-              placeholder="Tyler"
-              type="text"
-            />
-            {errors.firstName && (
-              <p className="dark:text-red-300 text-red-800 text-sm mt-1">
-                {errors.firstName.message}
-              </p>
-            )}
-          </Field>
-          <Field className="w-full">
-            <Label htmlFor="lastname">Last name</Label>
-            <Input
-              {...register("lastName")}
-              id="lastname"
-              placeholder="Durden"
-              type="text"
-            />
-            {errors.lastName && (
-              <p className="dark:text-red-300 text-red-800 text-sm mt-1">
-                {errors.lastName.message}
-              </p>
-            )}
-          </Field>
-        </div>
         <Field className="my-4">
           <Label htmlFor="email">Email Address</Label>
           <Input
@@ -113,7 +71,7 @@ export default function FormSignUp() {
           )}
         </Field>
         <Button disabled={isPending} type="submit" className="w-full cursor-pointer mt-6">
-          { isPending ? <IconLoader size={22} className="animate-spin" />: "Sign up" }
+          { isPending ? <IconLoader size={22} className="animate-spin" />: "Sign in" }
         </Button>
 
         <div className="my-8 h-[1px] w-full bg-gradient-to-r from-transparent via-neutral-300 to-transparent dark:via-neutral-700" />
