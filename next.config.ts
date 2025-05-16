@@ -1,7 +1,21 @@
-import type { NextConfig } from "next";
+import nextMDX from '@next/mdx'
 
-const nextConfig: NextConfig = {
-  /* config options here */
-};
+import { recmaPlugins } from './mdx/recma.mjs'
+import { rehypePlugins } from './mdx/rehype.mjs'
+import { remarkPlugins } from './mdx/remark.mjs'
 
-export default nextConfig;
+const withMDX = nextMDX({
+  extension: /\.mdx?$/,
+  options: {
+    remarkPlugins,
+    rehypePlugins,
+    recmaPlugins,
+  },
+})
+
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  pageExtensions: ['js', 'jsx', 'ts', 'tsx', 'mdx'],
+}
+
+export default withMDX(nextConfig)
