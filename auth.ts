@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import prisma from "./lib/prisma";
 import { getEnv } from "./utils/env/get-env";
+import { nextCookies } from "better-auth/next-js";
 
 export const auth = betterAuth({
     database: prismaAdapter(prisma, {
@@ -20,4 +21,5 @@ export const auth = betterAuth({
             clientSecret: getEnv("GOOGLE_CLIENT_SECRET"),
         },
     },
+    plugins: [nextCookies()]
 });
