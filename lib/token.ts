@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { PASSWORD_RESET_TOKEN_EXPIRE_TIME, VERIFICATION_TOKEN_EXPIRE_TIME } from '@/metadata';
 import { getPasswordResetTokenByEmail, getVerificationTokenByEmail } from '@/actions/token';
-import prisma from './db/prisma';
+import {prisma} from './db/prisma';
 const db = prisma;
 
 export const generateVerificationToken = async (email: string) => {

@@ -8,8 +8,9 @@ import { sendVerificationEmail } from "@/lib/mail"
 import { LoginSchema } from "@/schema/auth/login-schema"
 import { GetUserByEmail } from "../user"
 import { RegisterSchema, RegisterSchemaType } from "@/schema/auth/register-schema"
-import prisma from "@/lib/db/prisma"
+import {prisma} from "@/lib/db/prisma"
 import bcrypt from "bcryptjs"
+import { getVerificationTokenByToken } from "../token"
 
 export const signInProvider = async (provider: 'google' | 'github' | 'twitter' | 'linkedin') => {
     try {
@@ -115,7 +116,7 @@ export const Login = async (credentials : z.infer<typeof LoginSchema>) => {
 }
 
 
-const Register = async (credentials : RegisterSchemaType) => {
+export const Register = async (credentials : RegisterSchemaType) => {
     const {
         success,
         data
@@ -163,4 +164,42 @@ const Register = async (credentials : RegisterSchemaType) => {
     }
 }
 
-export default Register;
+export const newVerification = async(token: string) => {
+    const db = prisma;
+    const existing_token = await getVerificationTokenByToken(token);
+
+    if(!existing_token){
+        throw new Error("Invalid Token")
+    }
+    const hasExpired = new Date() > new Date(existing_token.expires);
+
+    if(hasExpired){
+        throw new Error("Token Expired")
+    }
+
+    const user = await GetUserByEmail(existing_token.email);
+
+    if(!user){
+        throw new Error("User not found")
+    }
+
+    await db.user.update({
+        where: {
+            id: user.id
+        },
+        data:{
+            emailVerified: new Date(),
+            email: user.email
+        }
+    })
+
+    await db.verificationToken.delete({
+        where: {
+            id: existing_token.id,
+        }
+    })
+
+    return {
+        success: "Email Verified"
+    }
+}

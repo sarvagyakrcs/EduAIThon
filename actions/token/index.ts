@@ -1,4 +1,4 @@
-import prisma from "@/lib/db/prisma";
+import {prisma} from "@/lib/db/prisma";
 
 export const getVerificationTokenByEmail = async (email : string) => {
     const db = prisma;

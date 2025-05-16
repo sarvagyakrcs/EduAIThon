@@ -1,5 +1,5 @@
 "use server";
-import prisma from "@/lib/db/prisma";
+import {prisma} from "@/lib/db/prisma";
 
 /**
  * Retrieves a user by their email from the database, based on the current session.

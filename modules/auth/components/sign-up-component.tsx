@@ -5,7 +5,7 @@ import { Dialog } from '@/components/ui/dialog'
 import { useState } from 'react'
 import { IconUser } from "@tabler/icons-react";
 import { cn } from "@/lib/utils";
-import FormSignUp from "../forms/login/form";
+import FormSignUp from "../forms/register/form";
 
 type Props = {
   type: "form" | "modal";

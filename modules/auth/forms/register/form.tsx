@@ -13,7 +13,7 @@ import {
   RegisterSchemaType,
 } from "@/schema/auth/register-schema";
 import { useMutation } from "@tanstack/react-query";
-import Register from "@/actions/auth";
+import {Register} from "@/actions/auth";
 
 export default function FormSignUp() {
   const {
