@@ -1,7 +1,7 @@
 "use client"
 
 import { Module, ModuleType, ModuleProgress } from '@prisma/client'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Heading, Subheading } from '@/components/ui/heading'
 import { Badge } from '@/components/ui/badge'
@@ -13,6 +13,11 @@ import { motion } from 'framer-motion'
 import { Switch, SwitchField } from '@/components/ui/switch'
 import { updateModuleProgress } from '@/actions/course/update-module-progress'
 import toast from 'react-hot-toast'
+import dynamic from 'next/dynamic'
+
+const ReactConfetti = dynamic(() => import('react-confetti'), {
+  ssr: false
+})
 
 type ModuleWithProgress = Module & {
   moduleProgress?: ModuleProgress | null
@@ -26,8 +31,45 @@ const CourseList = ({ modules }: Props) => {
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [localModules, setLocalModules] = useState<ModuleWithProgress[]>(modules);
   const [updatingProgress, setUpdatingProgress] = useState<string | null>(null);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [windowSize, setWindowSize] = useState({
+    width: typeof window !== 'undefined' ? window.innerWidth : 0,
+    height: typeof window !== 'undefined' ? window.innerHeight : 0
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight
+      });
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    const completedModules = localModules.filter(m => m.moduleProgress?.completed).length;
+    const progressPercentage = Math.round((completedModules / localModules.length) * 100);
+    
+    if (progressPercentage === 100) {
+      setShowConfetti(true);
+      // Hide confetti after 5 seconds
+      const timer = setTimeout(() => {
+        setShowConfetti(false);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [localModules]);
 
   const handleProgressUpdate = async (moduleId: string, completed: boolean) => {
+    // Set loading state
+    setUpdatingProgress(moduleId);
+
+    // Store the previous state for rollback
+    const previousModules = localModules;
+
     // Optimistic update
     setLocalModules(prevModules => 
       prevModules.map(module => {
@@ -54,24 +96,19 @@ const CourseList = ({ modules }: Props) => {
     );
 
     try {
-      await updateModuleProgress(moduleId, completed);
+      const result = await updateModuleProgress(moduleId, completed);
+      
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to update progress');
+      }
+
+      toast.success(completed ? 'Module marked as completed!' : 'Module marked as incomplete');
     } catch (error) {
-      setLocalModules(prevModules => 
-        prevModules.map(module => {
-          if (module.id === moduleId && module.moduleProgress) {
-            return {
-              ...module,
-              moduleProgress: {
-                ...module.moduleProgress,
-                completed: !completed,
-                completedAt: !completed ? new Date() : null
-              }
-            };
-          }
-          return module;
-        })
-      );
-      toast.error('Failed to update progress');
+      // Revert to previous state on error
+      setLocalModules(previousModules);
+      toast.error(error instanceof Error ? error.message : 'Failed to update progress. Please try again.');
+    } finally {
+      setUpdatingProgress(null);
     }
   };
 
@@ -101,6 +138,15 @@ const CourseList = ({ modules }: Props) => {
 
   return (
     <div className="space-y-6 sm:space-y-8 px-2 sm:px-0">
+      {showConfetti && (
+        <ReactConfetti
+          width={windowSize.width}
+          height={windowSize.height}
+          recycle={false}
+          numberOfPieces={200}
+          gravity={0.3}
+        />
+      )}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
         <div className="space-y-1">
           <Badge color="blue" className="mb-2">
@@ -123,6 +169,7 @@ const CourseList = ({ modules }: Props) => {
         {localModules.map((module, index) => {
           const isHovered = hoveredIndex === index;
           const moduleIcon = getModuleIcon(module.moduleType);
+          const isUpdating = updatingProgress === module.id;
 
           return (
             <motion.div
@@ -214,11 +261,17 @@ const CourseList = ({ modules }: Props) => {
                     <Switch 
                       defaultChecked={module.moduleProgress?.completed} 
                       onChange={(checked) => handleProgressUpdate(module.id, checked)}
-                      disabled={updatingProgress === module.id}
+                      disabled={isUpdating}
                       name={`module-progress-${module.id}`} 
-                      color="sky" 
+                      color="sky"
+                      className={isUpdating ? 'opacity-50 cursor-not-allowed' : ''}
                     />
                   </SwitchField>
+                  {isUpdating && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm rounded-xl">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                    </div>
+                  )}
                 </div>
               </div>
             </motion.div>

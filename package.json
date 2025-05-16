@@ -62,6 +62,7 @@
     "pdfjs-dist": "^5.2.133",
     "prisma": "^6.5.0",
     "react": "^19.0.0",
+    "react-confetti": "^6.4.0",
     "react-dom": "^19.0.0",
     "react-dropzone": "^14.3.8",
     "react-hook-form": "^7.55.0",
