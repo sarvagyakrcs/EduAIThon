@@ -36,12 +36,31 @@ const Layout = async ({ children }: Props) => {
       read: false
     }
   })
+
+  // Fetch module progress data
+  const moduleProgress = await prisma.moduleProgress.findMany({
+    where: {
+      module: {
+        course: {
+          userCourses: {
+            some: {
+              userId: session?.user?.id
+            }
+          }
+        }
+      }
+    },
+    orderBy: {
+      completedAt: 'desc'
+    }
+  })
   
   return (
     <ProtectedLayout 
       session={session}
       courseList={courseList}
       numberOfUnreadNotifications={numberOfUnreadNotifications}
+      moduleProgress={moduleProgress}
     >
       { children }
       <div className="hidden md:block">

@@ -45,10 +45,11 @@ import {
   Square2StackIcon,
   TicketIcon,
 } from '@heroicons/react/20/solid'
-import { Prisma } from '@prisma/client'
+import { Prisma, ModuleProgress } from '@prisma/client'
 import { Session } from 'next-auth'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import CourseStreak from '@/app/(protected)/home/components/course-streak'
 
 type Props = {
   children: React.ReactNode
@@ -57,6 +58,7 @@ type Props = {
   numberOfUnreadNotifications: number
   currentPath?: string
   currentCourseId?: string
+  moduleProgress: ModuleProgress[]
 }
 
 type CourseListForSidebar = Prisma.UserCourseGetPayload<{
@@ -76,7 +78,8 @@ export default function ProtectedLayout({
   courseList,
   numberOfUnreadNotifications,
   currentPath = '',
-  currentCourseId = ''
+  currentCourseId = '',
+  moduleProgress
 }: Props) {
   // Get current pathname for highlighting active items
   const pathname = usePathname() || currentPath
@@ -203,6 +206,12 @@ export default function ProtectedLayout({
                 <MegaphoneIcon />
                 <SidebarLabel>Broadcasts</SidebarLabel>
               </SidebarItem>
+            </SidebarSection>
+            <SidebarSection className="max-lg:hidden">
+              <SidebarHeading>Learning Streak</SidebarHeading>
+              <div className="px-2 py-1">
+                <CourseStreak moduleProgress={moduleProgress} />
+              </div>
             </SidebarSection>
             <SidebarSection className="max-lg:hidden">
               <SidebarHeading>Upcoming Events</SidebarHeading>
