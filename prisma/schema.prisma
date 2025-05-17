@@ -224,17 +224,18 @@ model Timetable {
 }
 
 model TimetableEntry {
-  id          String   @id @default(cuid())
-  title       String
-  description String?
-  startTime   DateTime
-  endTime     DateTime
-  dayOfWeek   Int      // 0 = Sunday, 1 = Monday, etc.
-  courseId    String?
-  course      Course?  @relation(fields: [courseId], references: [id], onDelete: SetNull)
-  timetable   Timetable @relation(fields: [timetableId], references: [id], onDelete: Cascade)
-  timetableId String
-  color       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                 String   @id @default(cuid())
+  title              String
+  description        String?
+  startTime          DateTime
+  endTime            DateTime
+  dayOfWeek          Int      // 0 = Sunday, 1 = Monday, etc.
+  courseId           String?
+  course             Course?  @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  timetable          Timetable @relation(fields: [timetableId], references: [id], onDelete: Cascade)
+  timetableId        String
+  color              String?
+  scientificPrinciple String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
 }

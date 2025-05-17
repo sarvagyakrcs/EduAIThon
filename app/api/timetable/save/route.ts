@@ -41,6 +41,7 @@ export async function POST(req: NextRequest) {
           courseId: entry.courseId || undefined,
           color: entry.color,
           timetableId: newTimetable.id,
+          scientificPrinciple: entry.scientificPrinciple || null,
         })),
       });
 

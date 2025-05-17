@@ -56,7 +56,8 @@ Each entry in the JSON array should follow this exact structure (don't include c
   "dayOfWeek": 1,
   "startTime": "HH:MM",
   "endTime": "HH:MM",
-  "courseId": "optional-course-id-if-applicable"
+  "courseId": "optional-course-id-if-applicable",
+  "scientificPrinciple": "optional scientific principle supporting this activity (only for wellness activities)"
 }
 
 IMPORTANT INSTRUCTIONS:
@@ -68,7 +69,19 @@ IMPORTANT INSTRUCTIONS:
    - Commute needs (e.g., "It takes me 30 minutes to get to college")
 
 2. Create appropriate entries for ALL activities mentioned in the description, not just course-related activities
-3. For non-course activities mentioned in the description (like "college", "work", "study time", etc.), create entries with appropriate titles and descriptions
+
+3. AUTOMATICALLY include these essential wellness activities based on scientific principles:
+   - Sleep: Schedule 7-9 hours of sleep each night (e.g., 11:00 PM to 7:00 AM), with consistent sleep and wake times
+   - Meal times: Schedule regular breakfast, lunch, and dinner times
+   - Exercise: Add at least 30 minutes of physical activity 3-5 days per week
+   - Study breaks: For every 1-2 hours of focused study, add a 10-15 minute break
+   - Relaxation: Schedule at least 30 minutes daily for mindfulness, meditation, or relaxation
+   - Social time: Include some social activities or free time for maintaining relationships
+
+4. For each wellness activity, include a brief "scientificPrinciple" field explaining the evidence-based reasoning
+   (e.g., "Regular exercise improves cognitive function and reduces stress hormones")
+
+5. For non-course activities mentioned in the description (like "college", "work", "study time", etc.), create entries with appropriate titles and descriptions
 
 Notes:
 - dayOfWeek should be a number: 0 = Sunday, 1 = Monday, etc.
@@ -186,6 +199,7 @@ IMPORTANT: Your response MUST be ONLY a valid parseable JSON array. Do not inclu
         endTime,
         courseId: courseId || null,
         color: entry.color || generateRandomColor(),
+        scientificPrinciple: entry.scientificPrinciple || null,
       };
     });
 

@@ -248,17 +248,19 @@ export default function TimetableCreator({ courses }: TimetableCreatorProps) {
                     >
                       <div 
                         className="font-medium w-full whitespace-nowrap overflow-hidden text-ellipsis" 
-                        title={entry.title}
+                        style={{ color: entry.color }}
                       >
-                        {truncateText(entry.title, 30)}
+                        {entry.title}
                       </div>
-                      <div className="text-sm flex items-center mt-1">
-                        <CalendarDays className="h-3.5 w-3.5 mr-1 opacity-70" />
+                      <div className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
                         {day}, {startTime} - {endTime}
                       </div>
                       {entry.description && (
-                        <div className="text-xs mt-2 opacity-80 line-clamp-2 overflow-hidden" title={entry.description}>
-                          {truncateText(entry.description, 50)}
+                        <div className="text-sm mt-1">{entry.description}</div>
+                      )}
+                      {entry.scientificPrinciple && (
+                        <div className="text-xs mt-2 italic text-zinc-500 dark:text-zinc-400 border-t border-dashed pt-1 border-zinc-200 dark:border-zinc-700">
+                          <span className="font-medium">Scientific Basis:</span> {entry.scientificPrinciple}
                         </div>
                       )}
                     </div>
@@ -266,23 +268,52 @@ export default function TimetableCreator({ courses }: TimetableCreatorProps) {
                 })}
               </div>
               
-              <div className="p-4 bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800">
-                <Button
-                  onClick={saveTimetable}
-                  disabled={isSaving}
-                  color="green"
-                  className="w-full"
-                >
-                  {isSaving ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      Saving your timetable...
-                    </>
-                  ) : (
-                    'Save and Apply Timetable'
-                  )}
-                </Button>
+              {/* Scientific Wellness Summary */}
+              <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800/30 rounded-lg">
+                <h4 className="text-md font-medium text-blue-800 dark:text-blue-300 mb-2">
+                  Wellness Activities Based on Scientific Principles
+                </h4>
+                <ul className="list-disc pl-5 space-y-2 text-sm text-blue-700 dark:text-blue-400">
+                  <li>
+                    <span className="font-medium">Sleep Schedule:</span> 7-9 hours of sleep supports memory consolidation, cognitive function, and immune health.
+                  </li>
+                  <li>
+                    <span className="font-medium">Regular Meals:</span> Consistent meal timing helps regulate blood sugar, metabolism, and circadian rhythm.
+                  </li>
+                  <li>
+                    <span className="font-medium">Exercise:</span> Physical activity improves brain function, reduces stress, and enhances learning capacity.
+                  </li>
+                  <li>
+                    <span className="font-medium">Study Breaks:</span> The Pomodoro Technique prevents cognitive fatigue and maintains focus and productivity.
+                  </li>
+                  <li>
+                    <span className="font-medium">Relaxation:</span> Mindfulness practices reduce cortisol levels and improve attention and emotional regulation.
+                  </li>
+                  <li>
+                    <span className="font-medium">Social Time:</span> Social connections are linked to better mental health, longevity, and academic success.
+                  </li>
+                </ul>
               </div>
+            </div>
+            
+            <div className="p-4 bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800">
+              <Button 
+                onClick={saveTimetable}
+                disabled={isSaving}
+                plain
+                className="w-full flex items-center justify-center"
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    Save Timetable
+                  </>
+                )}
+              </Button>
             </div>
           </div>
         )}
