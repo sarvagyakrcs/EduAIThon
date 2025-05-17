@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Timetable, TimetableEntry } from '@prisma/client';
+import { Timetable, TimetableEntry, Course, Module } from '@prisma/client';
 import FullCalendar from '@fullcalendar/react';
 import timeGridPlugin from '@fullcalendar/timegrid';
 import interactionPlugin from '@fullcalendar/interaction';
@@ -10,14 +10,21 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Divider } from '@/components/ui/divider';
-import { Text } from '@/components/ui/text';
+import { Text, Strong } from '@/components/ui/text';
 import { motion } from 'framer-motion';
 
 // Define the props type including related entities
 interface AdvancedCalendarProps {
   timetable: Timetable & {
     entries: (TimetableEntry & {
-      course: { id: string; name: string } | null;
+      course: { 
+        id: string; 
+        name: string;
+        description?: string | null;
+        outcome?: string | null;
+        currentLevel?: string | null;
+        modules: { id: string; name: string; moduleType: string }[]
+      } | null;
     })[];
   };
 }
@@ -33,6 +40,11 @@ type CalendarEvent = {
   extendedProps: {
     description: string;
     courseId: string | null;
+    courseName: string | null;
+    courseDescription: string | null;
+    courseOutcome: string | null;
+    courseLevel: string | null;
+    moduleCount: number;
     dayOfWeek: number;
     entryId: string;
   };
@@ -100,6 +112,11 @@ export default function AdvancedCalendar({ timetable }: AdvancedCalendarProps) {
         extendedProps: {
           description: entry.description || '',
           courseId: entry.courseId,
+          courseName: entry.course?.name || null,
+          courseDescription: entry.course?.description || null,
+          courseOutcome: entry.course?.outcome || null,
+          courseLevel: entry.course?.currentLevel || null,
+          moduleCount: entry.course?.modules?.length || 0,
           dayOfWeek: entry.dayOfWeek,
           entryId: entry.id
         }
@@ -207,6 +224,11 @@ export default function AdvancedCalendar({ timetable }: AdvancedCalendarProps) {
       extendedProps: {
         description: event.extendedProps.description,
         courseId: event.extendedProps.courseId,
+        courseName: event.extendedProps.courseName,
+        courseDescription: event.extendedProps.courseDescription,
+        courseOutcome: event.extendedProps.courseOutcome,
+        courseLevel: event.extendedProps.courseLevel,
+        moduleCount: event.extendedProps.moduleCount,
         dayOfWeek: event.extendedProps.dayOfWeek,
         entryId: event.extendedProps.entryId
       }
@@ -465,6 +487,7 @@ export default function AdvancedCalendar({ timetable }: AdvancedCalendarProps) {
           eventResize={handleEventResize}
           eventClick={handleEventClick}
           select={handleDateSelect}
+          eventContent={formatEventContent}
           slotLabelClassNames="text-xs text-zinc-500 dark:text-zinc-400"
           dayHeaderClassNames="text-sm font-semibold text-zinc-800 dark:text-zinc-200"
           eventClassNames="rounded-lg overflow-hidden shadow-sm border-none"
@@ -501,6 +524,55 @@ export default function AdvancedCalendar({ timetable }: AdvancedCalendarProps) {
             </div>
             
             <Divider className="my-4" />
+            
+            {/* Course Details Section (if applicable) */}
+            {currentEvent && currentEvent.extendedProps.courseId && (
+              <div className="mb-4 p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-lg border border-zinc-200 dark:border-zinc-700">
+                <div className="flex items-center gap-2 mb-2">
+                  <GraduationCap className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  <Strong className="text-sm">Course Information</Strong>
+                </div>
+                
+                <div className="text-sm space-y-2">
+                  <div>
+                    <Strong>Course: </Strong>
+                    <span className="text-zinc-700 dark:text-zinc-300">{currentEvent.extendedProps.courseName}</span>
+                  </div>
+                  
+                  {currentEvent.extendedProps.courseDescription && (
+                    <div>
+                      <Strong>Description: </Strong>
+                      <span className="text-zinc-600 dark:text-zinc-400">{currentEvent.extendedProps.courseDescription}</span>
+                    </div>
+                  )}
+                  
+                  {currentEvent.extendedProps.courseLevel && (
+                    <div>
+                      <Strong>Level: </Strong>
+                      <span className="text-zinc-600 dark:text-zinc-400">{currentEvent.extendedProps.courseLevel}</span>
+                    </div>
+                  )}
+                  
+                  <div className="flex gap-2 pt-1">
+                    <Badge color="blue" className="text-xs">
+                      {currentEvent.extendedProps.moduleCount} Modules
+                    </Badge>
+                    
+                    {currentEvent.extendedProps.courseId && (
+                      <Button 
+                        href={`/courses/${currentEvent.extendedProps.courseId}`}
+                        color="light"
+                        className="text-xs h-6 px-2"
+                      >
+                        View Course
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                
+                <Divider className="my-3" />
+              </div>
+            )}
             
             <form onSubmit={currentEvent ? saveEvent : createNewEvent} className="space-y-4">
               <div>
@@ -652,4 +724,27 @@ function getContrastColor(hexColor: string): string {
   
   // Return black for light colors, enhanced white for dark colors
   return luminance > 0.5 ? '#000000' : '#FFFFFF';
-} 
+}
+
+// Helper functions to format course data for tooltips
+const formatEventContent = (arg: any) => {
+  const event = arg.event;
+  const courseId = event.extendedProps.courseId;
+  const courseName = event.extendedProps.courseName;
+  
+  return {
+    html: `
+      <div class="px-2 py-1">
+        <div class="font-medium">${event.title}</div>
+        ${courseName ? `<div class="text-xs opacity-75">Course: ${courseName}</div>` : ''}
+        <div class="text-xs mt-1">
+          ${formatEventTime(event.start)} - ${formatEventTime(event.end)}
+        </div>
+      </div>
+    `
+  };
+};
+
+const formatEventTime = (date: Date): string => {
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}; 

@@ -21,7 +21,17 @@ export default async function CalendarPage() {
     include: {
       entries: {
         include: {
-          course: true
+          course: {
+            include: {
+              modules: {
+                select: {
+                  id: true,
+                  name: true,
+                  moduleType: true
+                }
+              }
+            }
+          }
         }
       }
     },

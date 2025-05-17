@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
 
     // Create a simple prompt as a string
     const prompt = `
-You are an AI assistant specialized in creating weekly timetables.
+You are an AI assistant specialized in creating weekly timetables for college students.
 
 Based on the following description and courses, create a detailed weekly schedule.
 Your response MUST be a valid JSON array containing timetable entries.
@@ -58,6 +58,17 @@ Each entry in the JSON array should follow this exact structure (don't include c
   "endTime": "HH:MM",
   "courseId": "optional-course-id-if-applicable"
 }
+
+IMPORTANT INSTRUCTIONS:
+1. Parse the user's description carefully for mentions of:
+   - College class times (e.g., "I go to college at 9 AM")
+   - Work or job commitments (e.g., "I work Tuesday afternoons")
+   - Personal activities (e.g., "I have gym on Mondays")
+   - Study times or preferences
+   - Commute needs (e.g., "It takes me 30 minutes to get to college")
+
+2. Create appropriate entries for ALL activities mentioned in the description, not just course-related activities
+3. For non-course activities mentioned in the description (like "college", "work", "study time", etc.), create entries with appropriate titles and descriptions
 
 Notes:
 - dayOfWeek should be a number: 0 = Sunday, 1 = Monday, etc.
