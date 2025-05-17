@@ -82,7 +82,7 @@ export default function DocumentationPage() {
               description="Organize and structure educational materials with intuitive interfaces."
             />
             <FeatureCard
-              icon={<Upload className="h-6 w-6 text-indigo-500" />}
+              icon={<Upload className="h-6 w-6 text-slate-500" />}
               title="File Uploads"
               description="Support for various document formats (PDF, DOCX) with automatic content extraction."
             />
@@ -267,7 +267,7 @@ export default function DocumentationPage() {
         {/* Database Schema */}
         <section className="space-y-4">
           <div className="flex items-center space-x-2">
-            <Database className="h-5 w-5 text-indigo-500" />
+            <Database className="h-5 w-5 text-slate-500" />
             <Heading level={2} className="text-2xl font-bold">Database Schema</Heading>
           </div>
           <Divider />
@@ -412,7 +412,7 @@ export default function DocumentationPage() {
                       <DocProcessingFeature title="Error Handling & Retries" description="Robust retry mechanisms ensure reliable processing of all documents." />
                     </div>
                   </div>
-                  <div className="pointer-events-none absolute -inset-0.5 bg-gradient-to-r from-blue-500 via-sky-500 to-indigo-500 opacity-0 blur-xl transition-all duration-500 group-hover:opacity-10"></div>
+                  <div className="pointer-events-none absolute -inset-0.5 bg-gradient-to-r from-blue-500 via-sky-500 to-slate-500 opacity-0 blur-xl transition-all duration-500 group-hover:opacity-10"></div>
                 </div>
               </div>
 
@@ -948,7 +948,7 @@ function FeatureCard({ icon, title, description }: { icon: React.ReactNode, titl
         <Heading level={3} className="text-lg font-semibold">{title}</Heading>
         <Text className="text-zinc-500 dark:text-zinc-400">{description}</Text>
       </div>
-      <div className="pointer-events-none absolute -inset-0.5 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-0 blur-xl transition-all duration-500 group-hover:opacity-10"></div>
+      <div className="pointer-events-none absolute -inset-0.5 bg-gradient-to-r from-slate-500 via-purple-500 to-pink-500 opacity-0 blur-xl transition-all duration-500 group-hover:opacity-10"></div>
     </div>
   )
 }
@@ -999,8 +999,8 @@ function SchemaCard({ name, description, fields }: { name: string, description: 
   return (
     <div className="p-5">
       <div className="flex items-center gap-2">
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900/30">
-          <Key className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-900/30">
+          <Key className="h-4 w-4 text-slate-600 dark:text-slate-400" />
         </div>
         <Heading level={3} className="text-lg font-semibold">{name}</Heading>
       </div>

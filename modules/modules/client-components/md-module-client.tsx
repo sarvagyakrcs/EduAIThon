@@ -62,13 +62,13 @@ export default function MdModuleClient({ module }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/80">
         <div className="flex items-center gap-2">
-          <SparkleIcon className="w-5 h-5 text-indigo-500" />
+          <SparkleIcon className="w-5 h-5 text-slate-500" />
           <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">{module.name}</h2>
         </div>
         
         <div className="flex items-center gap-2">
           {isLoading && (
-            <div className="text-sm text-indigo-500 flex items-center gap-1">
+            <div className="text-sm text-slate-500 flex items-center gap-1">
               <Loader2 className="h-4 w-4 animate-spin" />
               <span>Generating...</span>
             </div>
@@ -78,7 +78,7 @@ export default function MdModuleClient({ module }: Props) {
             <Button 
               onClick={handleSave}
               disabled={isSaving}
-              className="bg-indigo-500 hover:bg-indigo-600 text-white text-xs py-1 px-2 h-8"
+              className="bg-slate-500 hover:bg-slate-600 text-white text-xs py-1 px-2 h-8"
             >
               {isSaving ? (
                 <>
@@ -115,7 +115,7 @@ export default function MdModuleClient({ module }: Props) {
               h2: ({ node, ...props }) => <h2 className="text-2xl font-bold mt-8 mb-4 text-zinc-900 dark:text-white" {...props} />,
               h3: ({ node, ...props }) => <h3 className="text-xl font-semibold mt-6 mb-3 text-zinc-900 dark:text-white" {...props} />,
               p: ({ node, ...props }) => <p className="mb-4 text-zinc-700 dark:text-zinc-300 leading-relaxed" {...props} />,
-              a: ({ node, ...props }) => <a className="text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 underline decoration-1 underline-offset-2" {...props} />,
+              a: ({ node, ...props }) => <a className="text-slate-600 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-300 underline decoration-1 underline-offset-2" {...props} />,
               ul: ({ node, ...props }) => <ul className="mb-6 list-disc pl-6 text-zinc-700 dark:text-zinc-300" {...props} />,
               ol: ({ node, ...props }) => <ol className="mb-6 list-decimal pl-6 text-zinc-700 dark:text-zinc-300" {...props} />,
               li: ({ node, ...props }) => <li className="mb-2" {...props} />,

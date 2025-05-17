@@ -186,10 +186,10 @@ export default function ProtectedLayout({
                 <HomeIcon />
                 <SidebarLabel>Home</SidebarLabel>
               </SidebarItem>
-              <SidebarItem href="/events">
-                {isActive('/events') && <span className="absolute inset-y-2 -left-4 w-0.5 rounded-full bg-zinc-950 dark:bg-white" />}
+              <SidebarItem href="/calendar">
+                {isActive('/calendar') && <span className="absolute inset-y-2 -left-4 w-0.5 rounded-full bg-zinc-950 dark:bg-white" />}
                 <Square2StackIcon />
-                <SidebarLabel>Events</SidebarLabel>
+                <SidebarLabel>Time Table</SidebarLabel>
               </SidebarItem>
               <SidebarItem href="/orders">
                 {isActive('/orders') && <span className="absolute inset-y-2 -left-4 w-0.5 rounded-full bg-zinc-950 dark:bg-white" />}

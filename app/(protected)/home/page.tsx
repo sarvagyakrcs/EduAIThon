@@ -108,9 +108,9 @@ async function StatsCards() {
       </div>
 
       {/* Contribution Calendar */}
-      <div className="md:col-span-3">
+      <Link href={"/calendar"} className="md:col-span-3">
         <ContributionCalendar moduleProgress={moduleProgress} />
-      </div>
+      </Link>
     </div>
   );
 }

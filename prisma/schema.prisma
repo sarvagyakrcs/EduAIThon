@@ -76,6 +76,7 @@ model User {
   sessions      Session[]
   userCourses   UserCourse[]
   notifications Notification[]
+  timetables    Timetable[]
 
   @@map("users")
 }
@@ -151,9 +152,10 @@ model Course {
   outcome      String?
   currentLevel String?
 
-  modules     Module[]
-  userCourses UserCourse[]
-  attachments CourseAttachment[]
+  modules       Module[]
+  userCourses   UserCourse[]
+  attachments   CourseAttachment[]
+  timetableEntries TimetableEntry[]
 }
 
 model UserCourse {
@@ -208,4 +210,31 @@ model Notification {
 
   @@index([userId])
   @@index([read])
+}
+
+model Timetable {
+  id          String           @id @default(cuid())
+  name        String
+  description String?
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  entries     TimetableEntry[]
+}
+
+model TimetableEntry {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  startTime   DateTime
+  endTime     DateTime
+  dayOfWeek   Int      // 0 = Sunday, 1 = Monday, etc.
+  courseId    String?
+  course      Course?  @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  timetable   Timetable @relation(fields: [timetableId], references: [id], onDelete: Cascade)
+  timetableId String
+  color       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
