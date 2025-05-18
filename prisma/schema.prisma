@@ -151,6 +151,7 @@ model Course {
   updatedAt    DateTime @updatedAt
   outcome      String?
   currentLevel String?
+  teachingStyle String?  @default("general")
 
   modules       Module[]
   userCourses   UserCourse[]

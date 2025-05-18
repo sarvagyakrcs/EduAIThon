@@ -94,6 +94,72 @@ export default function TimetableCreator({ courses }: TimetableCreatorProps) {
       setError('');
       setIsSaving(true);
       
+      // Properly normalize date objects in each entry to ensure correct storage
+      const normalizedEntries = generatedEntries.map(entry => {
+        try {
+          const now = new Date();
+          const baseDate = new Date(now);
+          baseDate.setHours(0, 0, 0, 0);
+          
+          // Process startTime
+          let startTime;
+          if (typeof entry.startTime === 'string') {
+            // Handle string format "09:00" or ISO date string
+            if (entry.startTime.includes('T')) {
+              startTime = new Date(entry.startTime);
+            } else {
+              const [hours, minutes] = entry.startTime.split(':').map(Number);
+              startTime = new Date(baseDate);
+              startTime.setHours(hours, minutes, 0, 0);
+            }
+          } else if (entry.startTime instanceof Date) {
+            startTime = entry.startTime;
+          } else {
+            // Default start time if missing
+            startTime = new Date(baseDate);
+            startTime.setHours(9, 0, 0, 0);
+          }
+          
+          // Process endTime
+          let endTime;
+          if (typeof entry.endTime === 'string') {
+            // Handle string format "10:30" or ISO date string
+            if (entry.endTime.includes('T')) {
+              endTime = new Date(entry.endTime);
+            } else {
+              const [hours, minutes] = entry.endTime.split(':').map(Number);
+              endTime = new Date(baseDate);
+              endTime.setHours(hours, minutes, 0, 0);
+            }
+          } else if (entry.endTime instanceof Date) {
+            endTime = entry.endTime;
+          } else {
+            // Default end time if missing
+            endTime = new Date(baseDate);
+            endTime.setHours(10, 0, 0, 0);
+          }
+          
+          // Make sure dayOfWeek is a number between 0-6 relative to the current day
+          // 0 = today, 1 = tomorrow, etc.
+          let dayOfWeek = 0;
+          if (typeof entry.dayOfWeek === 'number') {
+            dayOfWeek = Math.min(Math.max(0, entry.dayOfWeek), 6);
+          }
+          
+          // Return a normalized entry
+          return {
+            ...entry,
+            startTime,
+            endTime,
+            dayOfWeek
+          };
+        } catch (error) {
+          console.error('Error normalizing timetable entry:', error, entry);
+          // Return the original entry as fallback
+          return entry;
+        }
+      });
+      
       const response = await fetch('/api/timetable/save', {
         method: 'POST',
         headers: {
@@ -102,7 +168,7 @@ export default function TimetableCreator({ courses }: TimetableCreatorProps) {
         body: JSON.stringify({
           name,
           description,
-          entries: generatedEntries,
+          entries: normalizedEntries,
         }),
       });
 

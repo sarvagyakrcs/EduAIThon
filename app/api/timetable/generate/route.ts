@@ -17,6 +17,15 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+    
+    // Check for API key
+    if (!process.env.GROQ_API_KEY) {
+      console.error("Missing GROQ_API_KEY environment variable");
+      return NextResponse.json(
+        { error: "API configuration error. Please contact the administrator." },
+        { status: 500 }
+      );
+    }
 
     // Fetch courses information
     const courses = await prisma.course.findMany({
@@ -93,7 +102,7 @@ IMPORTANT INSTRUCTIONS:
 
 CRITICAL REQUIREMENTS:
 - Every entry MUST have title, description, dayOfWeek, startTime, and endTime fields
-- dayOfWeek MUST be a number: 0 = Sunday, 1 = Monday, etc.
+- dayOfWeek MUST be a number: 0 = today, 1 = tomorrow, 2 = day after tomorrow, etc. (0-6 for the next 7 days)
 - startTime and endTime MUST be in 24-hour format, like "09:00" or "14:30"
 - Make sure to space out the entries appropriately across the week
 - Consider reasonable class durations (usually 1-2 hours) and include breaks
@@ -104,25 +113,70 @@ IMPORTANT: Your response MUST be ONLY a valid parseable JSON array. Do not inclu
 `;
 
     // Call Groq API directly
-    const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "llama3-70b-8192",
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0.2, // Lower temperature for more consistent, predictable output
-      }),
-    });
-
-    if (!groqResponse.ok) {
-      const error = await groqResponse.json();
-      throw new Error(`Groq API error: ${JSON.stringify(error)}`);
+    let groqResponse;
+    try {
+      if (!process.env.GROQ_API_KEY) {
+        throw new Error("Missing GROQ_API_KEY environment variable");
+      }
+      
+      groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "llama3-70b-8192",
+          messages: [{ role: "user", content: prompt }],
+          temperature: 0.2, // Lower temperature for more consistent, predictable output
+        }),
+      });
+      
+      if (!groqResponse.ok) {
+        const error = await groqResponse.json();
+        console.error("Groq API error details:", error);
+        throw new Error(`Groq API error: ${JSON.stringify(error)}`);
+      }
+    } catch (apiError) {
+      console.error("Error calling Groq API:", apiError);
+      
+      // Create a simple fallback timetable
+      return NextResponse.json({
+        entries: [
+          {
+            title: "Sample Class Session",
+            description: "This is a sample entry. The AI timetable generator is currently unavailable.",
+            dayOfWeek: 0, // Today
+            startTime: new Date(new Date().setHours(9, 0, 0, 0)),
+            endTime: new Date(new Date().setHours(10, 30, 0, 0)),
+            courseId: courseIds && courseIds.length > 0 ? courseIds[0] : null,
+            color: "#4285F4",
+            scientificPrinciple: "Regular scheduled classes improve learning outcomes through consistent practice."
+          },
+          {
+            title: "Study Session",
+            description: "Time to review materials and prepare for upcoming classes",
+            dayOfWeek: 1, // Tomorrow
+            startTime: new Date(new Date().setHours(14, 0, 0, 0)),
+            endTime: new Date(new Date().setHours(16, 0, 0, 0)),
+            courseId: null,
+            color: "#34A853",
+            scientificPrinciple: "Spaced repetition enhances long-term knowledge retention."
+          }
+        ]
+      });
     }
 
     const result = await groqResponse.json();
+    
+    // Log the entire result for debugging
+    console.log("Full Groq API result:", JSON.stringify(result, null, 2));
+    
+    if (!result.choices || !result.choices[0] || !result.choices[0].message) {
+      console.error("Unexpected Groq API response structure:", result);
+      throw new Error("Groq API returned an unexpected response structure");
+    }
+    
     const rawResponse = result.choices[0].message.content;
     console.log("Raw AI response:", rawResponse);
 
@@ -263,6 +317,21 @@ IMPORTANT: Your response MUST be ONLY a valid parseable JSON array. Do not inclu
     } catch (error) {
       console.error("Failed to parse AI response:", error);
       console.error("Raw response was:", rawResponse);
+      console.error("Response type:", typeof rawResponse);
+      // Try to log the first part of the response
+      if (typeof rawResponse === 'string') {
+        console.error("First 200 chars:", rawResponse.slice(0, 200));
+        // Try to find sections that look like JSON
+        const possibleJsonParts = rawResponse.match(/\{[\s\S]*?\}|\[[\s\S]*?\]/g);
+        if (possibleJsonParts) {
+          console.error("Possible JSON parts found:", possibleJsonParts.length);
+          possibleJsonParts.forEach((part, i) => {
+            console.error(`Part ${i} (${part.length} chars):`, part.slice(0, 100));
+          });
+        } else {
+          console.error("No possible JSON parts found in the response");
+        }
+      }
       return NextResponse.json(
         { error: "Failed to generate valid timetable. The AI response couldn't be parsed." },
         { status: 500 }
@@ -339,8 +408,11 @@ IMPORTANT: Your response MUST be ONLY a valid parseable JSON array. Do not inclu
         const [hours, minutes] = startTimeStr.split(':').map(Number);
         const [endHours, endMinutes] = endTimeStr.split(':').map(Number);
         
-        // Use a base date (e.g., Jan 1, 2023) + day of week for consistency
-        const baseDate = new Date(2023, 0, 1 + dayOfWeek);
+        // Use the current date as base date and add dayOfWeek days
+        const now = new Date();
+        const baseDate = new Date(now);
+        baseDate.setHours(0, 0, 0, 0); // Start at midnight
+        baseDate.setDate(baseDate.getDate() + dayOfWeek); // Add days from today
         
         const startTime = new Date(baseDate);
         startTime.setHours(hours, minutes, 0, 0);

@@ -7,7 +7,8 @@ const createDbCourse = async (data : CreateCourseSchema) => {
     const courseData = {
         name: data.name,
         outcome: data.mainOutcome,
-        currentLevel: data.currentLevel
+        currentLevel: data.currentLevel,
+        teachingStyle: data.teachingStyle || "general"
     };
     
     const course = await prisma.course.create({

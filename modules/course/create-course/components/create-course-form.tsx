@@ -13,6 +13,7 @@ import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import { CloudUpload, Loader2Icon, Paperclip } from "lucide-react";
+import { TeachingStyleSelector } from './teaching-style-selector';
 
 // File uploader components
 import {
@@ -49,6 +50,7 @@ type FormValues = z.infer<typeof createCourseSchema>;
 
 export default function CourseForm({ courseName }: { courseName: string }) {
   const [files, setFiles] = useState<File[] | null>(null);
+  const [teachingStyle, setTeachingStyle] = useState("general");
   const router = useRouter();
 
   // Dropzone configuration
@@ -106,6 +108,7 @@ export default function CourseForm({ courseName }: { courseName: string }) {
       formData.append("name", values.name);
       formData.append("mainOutcome", values.mainOutcome);
       formData.append("currentLevel", values.currentLevel);
+      formData.append("teachingStyle", teachingStyle);
       
       // Add each file individually
       if (files && files.length > 0) {
@@ -119,6 +122,7 @@ export default function CourseForm({ courseName }: { courseName: string }) {
         name: values.name,
         mainOutcome: values.mainOutcome,
         currentLevel: values.currentLevel,
+        teachingStyle: teachingStyle,
         notes: files // Pass the actual files array
       };
 
@@ -193,6 +197,9 @@ export default function CourseForm({ courseName }: { courseName: string }) {
             )}
           </div>
         </div>
+
+        {/* Teaching Style Selector */}
+        <TeachingStyleSelector selectedStyle={teachingStyle} onSelectStyle={setTeachingStyle} />
 
         {/* File Upload Field */}
         <div className="space-y-2">

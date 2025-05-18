@@ -4,6 +4,7 @@ export const createCourseSchema = z.object({
     name: z.string().min(1),
     mainOutcome: z.string().min(1, "Main outcome is required"),
     currentLevel: z.string().min(1, "Please select your current level"),
+    teachingStyle: z.string().default("general"),
     notes: z.any()
 });
 

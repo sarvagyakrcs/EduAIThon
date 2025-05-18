@@ -76,7 +76,8 @@ export async function createCourseEntry(formData: z.infer<typeof createCourseSch
             return await createAiModulesFn({
                 name: course.name,
                 currentLevel: course.currentLevel || "",
-                mainOutcome: course.outcome || ""
+                mainOutcome: course.outcome || "",
+                teachingStyle: formData.teachingStyle || "general"
             });
         };
 

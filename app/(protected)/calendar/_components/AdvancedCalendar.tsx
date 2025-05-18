@@ -80,48 +80,79 @@ export default function AdvancedCalendar({ timetable }: AdvancedCalendarProps) {
   useEffect(() => {
     if (!timetable) return;
     
-    const baseDate = new Date();
-    // Set to the nearest Sunday
-    baseDate.setDate(baseDate.getDate() - baseDate.getDay());
+    // Get current date information
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    
+    // Use today as the base date instead of going back to Sunday
+    const baseDate = new Date(now);
+    // Clear any time information to start at midnight
+    baseDate.setHours(0, 0, 0, 0);
+    
+    // Keep track of date for debugging
+    console.log('Base date for calendar:', baseDate.toISOString());
+    
+    // Use a type predicate to correctly filter null values
+    const isCalendarEvent = (event: CalendarEvent | null): event is CalendarEvent => {
+      return event !== null;
+    };
     
     const calendarEvents = timetable.entries.map(entry => {
-      // Use the dayOfWeek to set the day in the current week
-      const startDate = new Date(baseDate);
-      startDate.setDate(startDate.getDate() + entry.dayOfWeek);
-      
-      const startTime = new Date(entry.startTime);
-      startDate.setHours(startTime.getHours(), startTime.getMinutes(), 0, 0);
-      
-      const endDate = new Date(baseDate);
-      endDate.setDate(endDate.getDate() + entry.dayOfWeek);
-      
-      const endTime = new Date(entry.endTime);
-      endDate.setHours(endTime.getHours(), endTime.getMinutes(), 0, 0);
-
-      // Generate a higher contrast text color for dark mode
-      const contrastTextColor = getContrastColor(entry.color || '#3B82F6');
-      
-      return {
-        id: entry.id,
-        title: entry.title,
-        start: startDate,
-        end: endDate,
-        backgroundColor: entry.color || '#3B82F6',
-        borderColor: entry.color ? adjustColor(entry.color, -20) : '#2563EB',
-        textColor: contrastTextColor,
-        extendedProps: {
-          description: entry.description || '',
-          courseId: entry.courseId,
-          courseName: entry.course?.name || null,
-          courseDescription: entry.course?.description || null,
-          courseOutcome: entry.course?.outcome || null,
-          courseLevel: entry.course?.currentLevel || null,
-          moduleCount: entry.course?.modules?.length || 0,
-          dayOfWeek: entry.dayOfWeek,
-          entryId: entry.id
+      try {
+        // Create a new date object for this entry based on the current day + days ahead
+        const startDate = new Date(baseDate);
+        // Use entry.dayOfWeek directly as days to add (0=today, 1=tomorrow, etc.)
+        startDate.setDate(baseDate.getDate() + entry.dayOfWeek);
+        
+        // Parse the time components from the entry's startTime
+        const startTime = new Date(entry.startTime);
+        // Apply only the time components to our current week date
+        startDate.setHours(startTime.getHours(), startTime.getMinutes(), 0, 0);
+        
+        // Do the same for end date and time
+        const endDate = new Date(startDate);
+        
+        const endTime = new Date(entry.endTime);
+        endDate.setHours(endTime.getHours(), endTime.getMinutes(), 0, 0);
+        
+        // If end time is earlier than start time (across midnight), add a day
+        if (endDate < startDate) {
+          endDate.setDate(endDate.getDate() + 1);
         }
-      };
-    });
+        
+        // For debugging
+        console.log(`Event ${entry.title}: dayOfWeek=${entry.dayOfWeek}, start=${startDate.toISOString()}, end=${endDate.toISOString()}`);
+
+        // Generate a higher contrast text color for dark mode
+        const contrastTextColor = getContrastColor(entry.color || '#3B82F6');
+        
+        return {
+          id: entry.id,
+          title: entry.title,
+          start: startDate,
+          end: endDate,
+          backgroundColor: entry.color || '#3B82F6',
+          borderColor: entry.color ? adjustColor(entry.color, -20) : '#2563EB',
+          textColor: contrastTextColor,
+          extendedProps: {
+            description: entry.description || '',
+            courseId: entry.courseId,
+            courseName: entry.course?.name || null,
+            courseDescription: entry.course?.description || null,
+            courseOutcome: entry.course?.outcome || null,
+            courseLevel: entry.course?.currentLevel || null,
+            moduleCount: entry.course?.modules?.length || 0,
+            dayOfWeek: entry.dayOfWeek,
+            entryId: entry.id
+          }
+        };
+      } catch (error) {
+        console.error('Error creating calendar event from entry:', error, entry);
+        // Return null for problematic entries
+        return null;
+      }
+    }).filter(isCalendarEvent); // Use the type predicate to filter
     
     setEvents(calendarEvents);
   }, [timetable]);
@@ -207,6 +238,14 @@ export default function AdvancedCalendar({ timetable }: AdvancedCalendarProps) {
       console.error('Error updating event:', error);
       alert('Failed to update the event. Please try again.');
       info.revert();
+    }
+  };
+  
+  // Scroll to today
+  const scrollToToday = () => {
+    if (calendarRef.current) {
+      const calendarApi = calendarRef.current.getApi();
+      calendarApi.today();
     }
   };
   
@@ -368,11 +407,21 @@ export default function AdvancedCalendar({ timetable }: AdvancedCalendarProps) {
   const createNewEvent = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const startDate = new Date(editFormData.start);
-    const endDate = new Date(editFormData.end);
-    const dayOfWeek = startDate.getDay();
-    
     try {
+      const startDate = new Date(editFormData.start);
+      const endDate = new Date(editFormData.end);
+      const dayOfWeek = startDate.getDay(); // 0-6 where 0 is Sunday
+      
+      // Validate that the dates are valid
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        throw new Error("Invalid date format");
+      }
+      
+      // Validate that end time is after start time
+      if (endDate <= startDate) {
+        throw new Error("End time must be after start time");
+      }
+      
       const response = await fetch('/api/timetable/add-entry', {
         method: 'POST',
         headers: {
@@ -399,7 +448,7 @@ export default function AdvancedCalendar({ timetable }: AdvancedCalendarProps) {
       router.refresh();
     } catch (error) {
       console.error('Error creating event:', error);
-      alert('Failed to create the event. Please try again.');
+      alert(`Failed to create the event: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
   
@@ -407,6 +456,28 @@ export default function AdvancedCalendar({ timetable }: AdvancedCalendarProps) {
     <div className="space-y-6">
 
       <div className="relative rounded-xl border border-zinc-200 shadow-sm dark:border-zinc-800 overflow-hidden">
+        <div className="bg-white dark:bg-zinc-900 p-4 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center">
+          <div>
+            <h3 className="text-lg font-semibold text-zinc-800 dark:text-zinc-200">
+              Next 7 Days
+            </h3>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              {new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} - {
+                new Date(new Date().setDate(new Date().getDate() + 6)).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+              }
+            </p>
+          </div>
+          <div className="flex space-x-2">
+            <Button 
+              color="light" 
+              className="h-8 px-3 flex items-center gap-1.5 text-xs"
+              onClick={scrollToToday}
+            >
+              <Calendar className="h-3.5 w-3.5" />
+              Today
+            </Button>
+          </div>
+        </div>
         <style jsx global>{`
           .fc-theme-standard .fc-scrollgrid {
             border: none !important;
@@ -458,7 +529,11 @@ export default function AdvancedCalendar({ timetable }: AdvancedCalendarProps) {
           ref={calendarRef}
           plugins={[timeGridPlugin, interactionPlugin]}
           initialView="timeGridWeek"
-          headerToolbar={false}
+          headerToolbar={{
+            left: '',
+            center: '',
+            right: ''
+          }}
           allDaySlot={false}
           slotMinTime="07:00:00"
           slotMaxTime="23:00:00"
@@ -482,7 +557,8 @@ export default function AdvancedCalendar({ timetable }: AdvancedCalendarProps) {
             omitZeroMinute: false,
             meridiem: false
           }}
-          firstDay={1} // Start week on Monday
+          firstDay={new Date().getDay()} // Start the week on the current day
+          duration={{ days: 7 }} // Show exactly 7 days
           eventDrop={handleEventDrop}
           eventResize={handleEventResize}
           eventClick={handleEventClick}
@@ -492,6 +568,8 @@ export default function AdvancedCalendar({ timetable }: AdvancedCalendarProps) {
           dayHeaderClassNames="text-sm font-semibold text-zinc-800 dark:text-zinc-200"
           eventClassNames="rounded-lg overflow-hidden shadow-sm border-none"
           slotLaneClassNames="border-zinc-100 dark:border-zinc-800"
+          titleFormat={{ day: 'numeric', month: 'short' }} // Show dates like "Apr 8" instead of weekday names
+          dayHeaderFormat={{ weekday: 'short', month: 'numeric', day: 'numeric' }} // Show "Mon 4/8" format
         />
       </div>
       
