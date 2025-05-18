@@ -65,7 +65,7 @@ Course Name: ${courseName}
 Course Description: ${courseDescription}
 Course Outcomes: ${courseOutcomes}
 
-Create a quiz with 5 questions that test knowledge of this module.
+Create a quiz with 15-20 questions that test knowledge of this module.
 Each question MUST have EXACTLY 3 options, with EXACTLY 1 correct answer.
 
 The response must be VALID JSON with this structure:

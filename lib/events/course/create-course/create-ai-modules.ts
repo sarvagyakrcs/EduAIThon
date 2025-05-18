@@ -72,11 +72,17 @@ const getCourseModulesUsingAi = async (data : {
                 Each subtopic MUST have a clear title, detailed description, and be organized in logical order.
                 
                 For each subtopic, include:
-                1. A descriptive title
+                1. A descriptive title (without special characters or quotes in the title)
                 2. A detailed explanation of what the subtopic covers
-                3. Any prerequisites needed (optional)
+                3. Any prerequisites needed (optional) - make sure all strings in arrays have proper quotes
                 4. A difficulty level (Beginner, Intermediate, or Advanced)
                 5. The format type (TEXT, VIDEO, MD, or QUIZ)
+                
+                IMPORTANT: Your response MUST be properly formatted JSON with:
+                - No trailing commas
+                - All quotes properly escaped
+                - All array brackets properly closed
+                - All string values properly quoted
                 
                 Be thorough and comprehensive in your response.
             `,
@@ -85,6 +91,18 @@ const getCourseModulesUsingAi = async (data : {
         return object;
     } catch (error) {
         console.error("Error generating AI modules:", error);
+        
+        // Add more specific error handling for JSON validation errors
+        if (error instanceof Error && error.message.includes('json_validate_failed')) {
+            console.error("JSON validation failed. The model generated invalid JSON.");
+            
+            // Return empty result to prevent application from crashing
+            return {
+                name: data.name,
+                subtopics: []
+            };
+        }
+        
         throw error;
     }
 }

@@ -8,11 +8,12 @@ import { Badge } from '@/components/ui/badge'
 import { Text, Strong } from '@/components/ui/text'
 import { Divider } from '@/components/ui/divider'
 import { SparkleIcon } from '@/components/ui/sparkle-icon'
-import { Play, Clock, FileText, CheckCircle2, BookOpen, ChevronRight, BarChart2 } from 'lucide-react'
+import { Play, Clock, FileText, CheckCircle2, BookOpen, ChevronRight, BarChart2, BookOpenCheck } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Switch, SwitchField } from '@/components/ui/switch'
 import { updateModuleProgress } from '@/actions/course/update-module-progress'
 import toast from 'react-hot-toast'
+import TeacherChatbot from './teacher-chatbot'
 import dynamic from 'next/dynamic'
 
 const ReactConfetti = dynamic(() => import('react-confetti'), {
@@ -25,6 +26,7 @@ type ModuleWithProgress = Module & {
 
 type Props = {
   modules: ModuleWithProgress[]
+  courseId?: string
 }
 
 const CourseList = ({ modules }: Props) => {
@@ -32,6 +34,8 @@ const CourseList = ({ modules }: Props) => {
   const [localModules, setLocalModules] = useState<ModuleWithProgress[]>(modules);
   const [updatingProgress, setUpdatingProgress] = useState<string | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null);
+  const [showTeachingMode, setShowTeachingMode] = useState(false);
   const [windowSize, setWindowSize] = useState({
     width: typeof window !== 'undefined' ? window.innerWidth : 0,
     height: typeof window !== 'undefined' ? window.innerHeight : 0
@@ -147,137 +151,185 @@ const CourseList = ({ modules }: Props) => {
           gravity={0.3}
         />
       )}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-        <div className="space-y-1">
-          <Badge color="blue" className="mb-2">
-            <SparkleIcon className="mr-1 size-4" />
-            <span>Course Content</span>
-          </Badge>
-          <Heading className="text-lg sm:text-xl font-bold">Course Modules</Heading>
-          <Text className="text-sm sm:text-base">
-            {completedModules} of {localModules.length} modules completed ({progressPercentage}%)
-          </Text>
-        </div>
-        <Badge color="zinc" className="self-start sm:self-auto rounded-full px-3 py-1 sm:px-4 sm:py-1.5 text-xs sm:text-sm">
-          {localModules.length} {localModules.length === 1 ? 'Module' : 'Modules'}
-        </Badge>
-      </div>
-
-      <Divider />
-
-      <div className="grid gap-3 sm:gap-4">
-        {localModules.map((module, index) => {
-          const isHovered = hoveredIndex === index;
-          const moduleIcon = getModuleIcon(module.moduleType);
-          const isUpdating = updatingProgress === module.id;
-
-          return (
-            <motion.div
-              key={module.id}
-              className="group relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-1 transition-all duration-300 hover:border-zinc-300 hover:shadow-lg dark:border-zinc-800 dark:bg-zinc-900/70 dark:hover:border-zinc-700"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: index * 0.1 }}
-              onMouseEnter={() => setHoveredIndex(index)}
-              onMouseLeave={() => setHoveredIndex(null)}
+      {showTeachingMode ? (
+        <div className="mb-4">
+          <div className="flex items-center justify-between mb-4">
+            <Button 
+              className="flex items-center gap-2"
+              onClick={() => setShowTeachingMode(false)}
             >
-              {/* Background animations */}
-              <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl">
-                <div
-                  className={`absolute -inset-0.5 bg-gradient-to-r ${getModuleGradient(module.moduleType)} opacity-0 blur-xl transition-all duration-500 group-hover:opacity-20`}
-                />
-              </div>
+              <ChevronRight className="rotate-180" size={16} />
+              <span>Back to modules</span>
+            </Button>
+            {selectedModuleId && (
+              <Badge color="purple" className="flex items-center gap-1">
+                <BookOpenCheck size={14} />
+                <span>Teaching Mode</span>
+              </Badge>
+            )}
+          </div>
+          <TeacherChatbot modules={localModules} selectedModuleId={selectedModuleId} />
+        </div>
+      ) : (
+        <>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div className="space-y-1">
+              <Badge color="blue" className="mb-2">
+                <SparkleIcon className="mr-1 size-4" />
+                <span>Course Content</span>
+              </Badge>
+              <Heading className="text-lg sm:text-xl font-bold">Course Modules</Heading>
+              <Text className="text-sm sm:text-base">
+                {completedModules} of {localModules.length} modules completed ({progressPercentage}%)
+              </Text>
+            </div>
+            <div className="flex gap-2 items-center">
+              <Button 
+                onClick={() => setShowTeachingMode(true)} 
+                className="self-start sm:self-auto"
+              >
+                <BookOpenCheck className="mr-2 size-4" />
+                <span>Teaching Mode</span>
+              </Button>
+              <Badge color="zinc" className="self-start sm:self-auto rounded-full px-3 py-1 sm:px-4 sm:py-1.5 text-xs sm:text-sm">
+                {localModules.length} {localModules.length === 1 ? 'Module' : 'Modules'}
+              </Badge>
+            </div>
+          </div>
 
-              <div className="relative flex flex-col sm:flex-row items-start gap-3 sm:gap-4 p-3 sm:p-4">
-                {/* Module number with animated circle */}
-                <div className="relative flex-shrink-0 self-center sm:self-start mb-2 sm:mb-0">
-                  <div className="flex size-12 sm:size-14 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800">
-                    <Strong className="text-base sm:text-lg">{index + 1}</Strong>
-                    {isHovered && (
-                      <motion.div
-                        className="absolute inset-0 rounded-full border-2 border-primary/40"
-                        initial={{ scale: 0.8, opacity: 0 }}
-                        animate={{ scale: 1.2, opacity: 0 }}
-                        transition={{ duration: 1.5, repeat: Infinity }}
-                      />
-                    )}
-                  </div>
-                  {/* Type icon */}
-                  <div className={`absolute -right-1 -bottom-1 flex size-6 sm:size-7 items-center justify-center rounded-full ${getModuleBgColor(module.moduleType)}`}>
-                    {moduleIcon}
-                  </div>
-                </div>
+          <Divider />
 
-                {/* Content */}
-                <div className="flex-1 w-full">
-                  <div className="mb-1 flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-0">
-                    <Heading level={4} className="font-semibold text-base sm:text-lg">
-                      {module.name}
-                    </Heading>
-                    <Badge color={getModuleBadgeColor(module.moduleType)} className="self-start text-xs sm:text-sm">
-                      {module.moduleType}
-                    </Badge>
-                  </div>
+          <div className="grid gap-3 sm:gap-4">
+            {localModules.map((module, index) => {
+              const isHovered = hoveredIndex === index;
+              const moduleIcon = getModuleIcon(module.moduleType);
+              const isUpdating = updatingProgress === module.id;
 
-                  {module.description && (
-                    <Text className="mb-2 sm:mb-3 line-clamp-2 text-sm sm:text-base">{module.description}</Text>
-                  )}
-
-                  <div className="mt-2 sm:mt-3 flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
-                    <div className="flex items-center gap-1">
-                      <Clock size={14} />
-                      <span>{new Date(module.createdAt).toLocaleDateString()}</span>
-                    </div>
-                    {module.videoUrl && (
-                      <div className="flex items-center gap-1">
-                        <Play size={14} />
-                        <span>Video Available</span>
-                      </div>
-                    )}
-                    {module.thumbnailUrl && (
-                      <div className="flex items-center gap-1">
-                        <FileText size={14} />
-                        <span>Preview Available</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Action button with hover effect */}
-                <div className="w-full sm:w-auto sm:ml-2 flex-shrink-0 flex items-center justify-center self-center mt-3 sm:mt-0">
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="group/btn relative"
-                  >
-                    <Button href={`/modules/${module.id}`} color='sky' className="relative rounded-full w-full sm:w-auto px-4 py-2 text-sm sm:text-base">
-                      <span className="flex items-center justify-center gap-1.5">
-                        Open <ChevronRight size={16} className="transition-transform duration-300 group-hover/btn:translate-x-1" />
-                      </span>
-                      <span className="absolute inset-x-0 -bottom-px block h-px w-full bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 transition duration-500 group-hover/btn:opacity-100" />
-                    </Button>
-                  </motion.div>
-                  <SwitchField>
-                    <Switch 
-                      defaultChecked={module.moduleProgress?.completed} 
-                      onChange={(checked) => handleProgressUpdate(module.id, checked)}
-                      disabled={isUpdating}
-                      name={`module-progress-${module.id}`} 
-                      color="sky"
-                      className={isUpdating ? 'opacity-50 cursor-not-allowed' : ''}
+              return (
+                <motion.div
+                  key={module.id}
+                  className="group relative overflow-hidden rounded-xl border border-zinc-200 bg-white p-1 transition-all duration-300 hover:border-zinc-300 hover:shadow-lg dark:border-zinc-800 dark:bg-zinc-900/70 dark:hover:border-zinc-700"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: index * 0.1 }}
+                  onMouseEnter={() => setHoveredIndex(index)}
+                  onMouseLeave={() => setHoveredIndex(null)}
+                >
+                  {/* Background animations */}
+                  <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl">
+                    <div
+                      className={`absolute -inset-0.5 bg-gradient-to-r ${getModuleGradient(module.moduleType)} opacity-0 blur-xl transition-all duration-500 group-hover:opacity-20`}
                     />
-                  </SwitchField>
-                  {isUpdating && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm rounded-xl">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                  </div>
+
+                  <div className="relative flex flex-col sm:flex-row items-start gap-3 sm:gap-4 p-3 sm:p-4">
+                    {/* Module number with animated circle */}
+                    <div className="relative flex-shrink-0 self-center sm:self-start mb-2 sm:mb-0">
+                      <div className="flex size-12 sm:size-14 items-center justify-center rounded-full bg-zinc-100 dark:bg-zinc-800">
+                        <Strong className="text-base sm:text-lg">{index + 1}</Strong>
+                        {isHovered && (
+                          <motion.div
+                            className="absolute inset-0 rounded-full border-2 border-primary/40"
+                            initial={{ scale: 0.8, opacity: 0 }}
+                            animate={{ scale: 1.2, opacity: 0 }}
+                            transition={{ duration: 1.5, repeat: Infinity }}
+                          />
+                        )}
+                      </div>
+                      {/* Type icon */}
+                      <div className={`absolute -right-1 -bottom-1 flex size-6 sm:size-7 items-center justify-center rounded-full ${getModuleBgColor(module.moduleType)}`}>
+                        {moduleIcon}
+                      </div>
                     </div>
-                  )}
-                </div>
-              </div>
-            </motion.div>
-          );
-        })}
-      </div>
+
+                    {/* Content */}
+                    <div className="flex-1 w-full">
+                      <div className="mb-1 flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-0">
+                        <Heading level={4} className="font-semibold text-base sm:text-lg">
+                          {module.name}
+                        </Heading>
+                        <Badge color={getModuleBadgeColor(module.moduleType)} className="self-start text-xs sm:text-sm">
+                          {module.moduleType}
+                        </Badge>
+                      </div>
+
+                      {module.description && (
+                        <Text className="mb-2 sm:mb-3 line-clamp-2 text-sm sm:text-base">{module.description}</Text>
+                      )}
+
+                      <div className="mt-2 sm:mt-3 flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
+                        <div className="flex items-center gap-1">
+                          <Clock size={14} />
+                          <span>{new Date(module.createdAt).toLocaleDateString()}</span>
+                        </div>
+                        {module.videoUrl && (
+                          <div className="flex items-center gap-1">
+                            <Play size={14} />
+                            <span>Video Available</span>
+                          </div>
+                        )}
+                        {module.thumbnailUrl && (
+                          <div className="flex items-center gap-1">
+                            <FileText size={14} />
+                            <span>Preview Available</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Action buttons with hover effect */}
+                    <div className="w-full sm:w-auto sm:ml-2 flex-shrink-0 flex items-center justify-center gap-2 self-center mt-3 sm:mt-0">
+                      <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <Button
+                          className="h-10 px-4 flex items-center"
+                          onClick={() => {
+                            setSelectedModuleId(module.id);
+                            setShowTeachingMode(true);
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }}
+                          color="purple"
+                        >
+                          <BookOpenCheck className="mr-2 size-4" />
+                          <span>Teach</span>
+                        </Button>
+                      </motion.div>
+                      <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <Button href={`/modules/${module.id}`} color='sky' className="relative rounded-full w-full sm:w-auto px-4 py-2 text-sm sm:text-base">
+                          <span className="flex items-center justify-center gap-1.5">
+                            Open <ChevronRight size={16} className="transition-transform duration-300 group-hover/btn:translate-x-1" />
+                          </span>
+                          <span className="absolute inset-x-0 -bottom-px block h-px w-full bg-gradient-to-r from-transparent via-primary/50 to-transparent opacity-0 transition duration-500 group-hover/btn:opacity-100" />
+                        </Button>
+                      </motion.div>
+                      <SwitchField>
+                        <Switch 
+                          defaultChecked={module.moduleProgress?.completed} 
+                          onChange={(checked) => handleProgressUpdate(module.id, checked)}
+                          disabled={isUpdating}
+                          name={`module-progress-${module.id}`} 
+                          color="sky"
+                          className={isUpdating ? 'opacity-50 cursor-not-allowed' : ''}
+                        />
+                      </SwitchField>
+                      {isUpdating && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm rounded-xl">
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </>
+      )}
     </div>
   )
 }

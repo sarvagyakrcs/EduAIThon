@@ -17,7 +17,7 @@ const CourseDetailPage = async ({ params }: Props) => {
 
     return (
         <div className="w-full px-0 sm:px-4">
-            <CourseList modules={course} />
+            <CourseList modules={course} courseId={id} />
         </div>
     )
 }

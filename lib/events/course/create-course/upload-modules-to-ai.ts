@@ -16,7 +16,25 @@ const uploadModulesToDB = async ({ aiModules, courseId, userId } : {aiModules : 
             return { count: 0, message: "No valid modules to upload" };
         }
         
-        const moduleData = aiModules.subtopics.map(module => {
+        // Filter out invalid modules to ensure we don't crash
+        const validModules = aiModules.subtopics.filter(module => {
+            return (
+                module &&
+                typeof module === 'object' &&
+                typeof module.title === 'string' &&
+                typeof module.description === 'string' &&
+                (!module.prerequisites || Array.isArray(module.prerequisites))
+            );
+        });
+        
+        if (validModules.length === 0) {
+            console.error("No valid modules found after filtering");
+            return { count: 0, message: "No valid modules found after filtering" };
+        }
+        
+        console.log(`Processing ${validModules.length} valid modules out of ${aiModules.subtopics.length} total`);
+        
+        const moduleData = validModules.map(module => {
             // Map the generated modules to the actual database schema
             return {
                 courseId, // Ensure courseId is explicitly used
