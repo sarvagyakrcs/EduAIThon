@@ -1,0 +1,537 @@
+# AI COURSE GENERATOR - COMPREHENSIVE TECHNICAL DETAILS
+
+## PROJECT OVERVIEW
+AI Course Generator is a modern web application for generating and managing AI educational courses, built with Next.js, TypeScript, and Tailwind CSS. The platform leverages artificial intelligence to help create, manage, and deliver educational content through a sophisticated technology stack and advanced features.
+
+## CORE TECHNOLOGY STACK
+
+### Frontend Framework
+- Next.js 15 (latest version)
+- React 19 with both client and server components
+- TypeScript for type safety
+- App Router architecture for modern routing
+- Server-side rendering and static site generation capabilities
+
+### Styling & UI
+- Tailwind CSS 4 for utility-first styling
+- Tailwind Merge for class name management
+- Headless UI components for accessible interactions
+- Custom UI component library with extensive reusable elements
+- Dark/Light mode support via next-themes
+- Mobile-first responsive design approach
+
+### State Management & Data Flow
+- Tanstack React Query v5.71.0 for server state management
+- Client-side state management for UI interactions
+- Optimistic UI updates for improved user experience
+- Form handling with React Hook Form v7.55.0
+- Zod v3.24.2 for schema validation and type inference
+
+### 3D Visualization
+- Three.js v0.176.0 as the core 3D library
+- React Three Fiber v9.0.0-alpha.8 as React renderer for Three.js
+- drei v10.0.7 for Three.js helper components and utilities
+- Custom ThreeGlobe v2.42.4 integration for interactive globe visualization
+- Interactive knowledge maps and concept visualizations
+- 3D animations with custom shaders
+- Camera controls with OrbitControls for user interaction
+- Dynamic lighting and atmospheric effects
+
+## BACKEND INFRASTRUCTURE
+
+### Server Framework
+- Next.js API routes for backend functionality
+- Server actions for data mutations
+- Edge functions for performance-critical operations
+
+### Database Architecture
+- PostgreSQL with vector extension for primary data storage
+- Prisma ORM v6.5.0 for type-safe database access
+- Multiple data models for course structure, user data, and content
+- Relational database schema with proper indexes and constraints
+- Database migration system via Prisma
+
+### Authentication System
+- NextAuth v5.0.0-beta.25 for authentication management
+- Multiple auth providers: credentials, OAuth (GitHub)
+- JWT-based session management
+- Email verification with custom tokens
+- Password reset functionality
+- Role-based access control (ADMIN, USER roles)
+- Security protections against CSRF and XSS attacks
+
+### File Storage
+- AWS S3-compatible storage (R2) for document and media storage
+- Content-type detection and validation
+- Secure upload/download mechanisms
+- CDN integration for fast content delivery
+- Version control for document revisions
+
+## AI INTEGRATION & CAPABILITIES
+
+### AI Models & Frameworks
+- LangChain v0.3.24 for orchestrating AI operations
+- Integration with multiple AI providers:
+  - GROQ API (qwen-qwq-32b model)
+  - Google Generative AI
+  - OpenAI (via AI SDK)
+- AI SDK v4.3.13 for standardized AI model interactions
+- Support for multiple model types and configurations
+
+### Vector Database & Embeddings
+- Pinecone v5.1.2 for vector database functionality
+- Custom embedding generation pipeline
+- PostgreSQL vector extension for storing embeddings
+- Semantic search capabilities using cosine similarity
+- Document chunking and processing for optimal embedding
+
+### Natural Language Processing Features
+- Text extraction from multiple document formats
+- Content summarization and knowledge extraction
+- Structured information parsing
+- Entity recognition and relationship mapping
+- Context-aware query processing
+
+### Document Processing Pipeline
+- PDF parsing with pdf-parse v1.1.1
+- DOCX processing with mammoth v1.9.0
+- XLSX handling with xlsx v0.18.5
+- Plain text processing with optimized algorithms
+- Markdown processing with remark/rehype ecosystem
+- OCR capabilities for image-based documents
+- Document chunking for efficient processing
+- Custom content extractors for domain-specific formats
+
+## COURSE GENERATION ARCHITECTURE
+
+### Content Generation Pipeline
+- Multi-step AI processing workflow
+- Event-driven architecture for complex operations
+- Parallel processing for efficiency
+- Template-based generation with customization
+- Quality control mechanisms and validation
+
+### Module Generation System
+- Course structure planning with AI
+- Learning objective generation and mapping
+- Content development with specific learning outcomes
+- Multiple content types: text, video, interactive elements
+- Automatic difficulty level assignment
+- Prerequisite mapping and course sequencing
+
+### Assessment Generation
+- Quiz creation based on course content
+- Multiple question types (multiple choice, etc.)
+- Difficulty calibration
+- Answer validation and feedback generation
+- Performance tracking and analytics
+
+### Media Integration
+- YouTube video finder with AI relevance scoring
+- Video metadata extraction and processing
+- Thumbnail generation and management
+- Custom video player with learning-specific features
+- Media library management system
+
+## USER EXPERIENCE FEATURES
+
+### Course Management
+- Course creation wizard with step-by-step guidance
+- Course editing with real-time collaboration
+- Module sequencing and organization
+- Learning path visualization
+- Progress tracking with completion metrics
+- Course sharing and access management
+
+### Learning Interface
+- Clean, distraction-free content presentation
+- Interactive elements for engagement
+- Progress indicators and bookmarking
+- Note-taking capabilities
+- Responsive design for all devices
+- Accessibility features for diverse learners
+
+### Calendar & Scheduling
+- FullCalendar integration for course scheduling
+- Timetable management for structured learning
+- Event creation and management
+- Reminder system
+- Study session planning
+- Integration with course progress
+
+### Notification System
+- Real-time notifications via UI
+- Email notifications via Resend v4.2.0
+- Different notification types:
+  - CONSTRUCTIVE
+  - DESTRUCTIVE
+  - URGENT
+  - INFORMATIVE
+- User preference management
+- Read/unread status tracking
+
+## TECHNICAL IMPLEMENTATION DETAILS
+
+### Event Orchestration System
+- Custom EventOrchestrator class
+- Event-based workflow management
+- Dependency resolution between events
+- Parallel execution of independent events
+- Error handling and recovery mechanisms
+- Result propagation between events
+
+### File Processing Pipeline
+1. Client-side upload via react-dropzone v14.3.8
+2. Server-side validation and sanitization
+3. Document parsing and text extraction
+4. Content chunking and processing
+5. AI analysis and metadata extraction
+6. Storage in R2 with appropriate metadata
+7. Embedding generation for searchability
+8. Version control for document history
+
+### AI Module Generation Process
+1. Initial course topic and goals analysis
+2. Structured content planning
+3. Learning objective generation
+4. Topic hierarchy creation
+5. Content development for each module
+6. Quiz and assessment generation
+7. Media recommendation and integration
+8. Quality control and review
+
+### Database Schema Details
+- User model with authentication data
+- Course model with metadata and relationships
+- Module model with different content types
+- Quiz model with questions and answers
+- UserCourse relationship model
+- CourseAttachment for documents
+- ModuleProgress for tracking completion
+- Notification system with multiple types
+- Timetable system for scheduling
+- Vector embeddings for semantic search
+
+### Performance Optimizations
+- Edge caching for static assets
+- Incremental Static Regeneration for content
+- Dynamic imports and code splitting
+- Server components to reduce client JS
+- Image optimization with next/image
+- Database query optimization
+- Connection pooling
+- Memoization for expensive computations
+- Efficient rendering with React optimizations
+
+### Security Measures
+- Input validation with Zod schemas
+- CSRF protection
+- XSS prevention
+- Rate limiting
+- Authentication validation
+- Role-based access control
+- Secure file handling
+- Environment variable protection
+- Error handling without leaking info
+- Regular security audits
+
+## DEVELOPMENT TOOLING
+
+### Build & Development Tools
+- Bun as an alternative to Node.js
+- TypeScript for type checking
+- ESLint for code linting
+- Next.js development server
+- Hot module replacement
+- TypeScript compiler
+- Tailwind CSS processor
+- PostCSS for CSS processing
+
+### Deployment Infrastructure
+- Vercel-optimized deployment
+- Edge functions for global performance
+- CDN for static assets
+- Database connection pooling
+- Environment variable management
+- Build process optimization
+- CI/CD integration
+
+### CLI Tools
+- Custom init script
+- Development utilities
+- Database management scripts
+- Content generation tools
+
+## USER ROLES & PERMISSIONS
+
+### Admin Capabilities
+- Full system access
+- User management
+- Content approval
+- Analytics dashboard
+- System configuration
+- Feature management
+
+### Regular User Features
+- Course creation and management
+- Course enrollment
+- Progress tracking
+- Note taking
+- Assessment completion
+- Certificate generation
+
+## DOMAIN-SPECIFIC FEATURES
+
+### Educational Elements
+- Learning objective mapping
+- Knowledge structure visualization
+- Pedagogical approach customization
+- Learning style adaptation
+- Assessment variety
+- Progress visualization
+
+### Collaborative Features
+- Real-time course co-editing
+- Comment and feedback system
+- Sharing capabilities
+- Version history
+- Change tracking
+
+## IMPLEMENTATION DETAILS OF KEY COMPONENTS
+
+### AI Course Creation
+- Input: Course name, main outcome, current skill level, optional notes
+- Process: 
+  1. Data validation
+  2. Course creation in database
+  3. Notes upload and processing
+  4. AI module generation
+  5. Module storage in database
+  6. User notification
+- Output: Structured course with modules, quizzes, and materials
+
+### Document Processing
+- Input: PDF, DOCX, TXT, or other document formats
+- Process:
+  1. Document parsing and text extraction
+  2. Content analysis and summarization
+  3. Key concept identification
+  4. Embedding generation
+  5. Storage with metadata
+- Output: Searchable content with embeddings for semantic retrieval
+
+### Quiz Generation
+- Input: Course content and learning objectives
+- Process:
+  1. Content analysis for key concepts
+  2. Question generation with varying difficulty
+  3. Distractor (wrong answer) generation
+  4. Answer validation
+  5. Difficulty calibration
+- Output: Structured quiz with questions, options, and correct answers
+
+### Calendar Management
+- Input: Course modules and user preferences
+- Process:
+  1. Time allocation based on content volume
+  2. Scheduling with spaced repetition principles
+  3. Integration with user's existing schedule
+  4. Optimizing for learning efficiency
+- Output: Personalized study schedule with reminders
+
+### Video Recommendation
+- Input: Course topic and module content
+- Process:
+  1. Keyword extraction from course content
+  2. Search query formulation
+  3. YouTube API integration
+  4. Result filtering and ranking
+  5. Metadata extraction
+- Output: Curated list of relevant educational videos
+
+## TECHNICAL CHALLENGES & SOLUTIONS
+
+### Large Document Processing
+- Challenge: Handling large PDFs and documents
+- Solution: Chunking algorithm with overlap, parallel processing
+
+### AI Model Timeout Issues
+- Challenge: AI model processing time for complex courses
+- Solution: Asynchronous processing, job queue, progress indicators
+
+### Embedding Quality
+- Challenge: Generating high-quality embeddings for search
+- Solution: Custom processing pipeline with text cleaning and chunking
+
+### 3D Performance
+- Challenge: 3D visualizations on low-end devices
+- Solution: Level-of-detail system, performance monitoring, fallbacks
+
+### Concurrent Editing
+- Challenge: Multiple users editing same course
+- Solution: Operational transformation, locking mechanisms
+
+## FUTURE DEVELOPMENT ROADMAP
+
+### Planned Technical Enhancements
+- Federated learning for personalized content
+- Advanced spaced repetition algorithms
+- Expanded media type support
+- Mobile app with offline capabilities
+- API for third-party integrations
+- Enhanced analytics dashboard
+- Multi-language support with auto-translation
+- Voice interface for accessibility
+- VR/AR content integration
+
+### Scalability Improvements
+- Microservices architecture
+- Kubernetes deployment
+- Global CDN optimization
+- Database sharding strategies
+- Caching layer enhancements
+- AI processing optimization
+
+## TECHNOLOGY VERSIONS & DEPENDENCIES
+
+### Core Dependencies
+- next: 15.2.4
+- react: 19.0.0
+- react-dom: 19.0.0
+- typescript: 5.x
+- tailwindcss: 4.x
+- prisma: 6.5.0
+- @prisma/client: 6.5.0
+
+### AI & Machine Learning
+- ai: 4.3.13
+- @ai-sdk/google: 1.2.14
+- @ai-sdk/groq: 1.2.8
+- langchain: 0.3.24
+- @langchain/core: 0.3.51
+- @langchain/community: 0.3.42
+- @pinecone-database/pinecone: 5.1.2
+
+### Authentication
+- next-auth: 5.0.0-beta.25
+- @auth/prisma-adapter: 2.8.0
+- bcryptjs: 3.0.2
+
+### UI Components
+- framer-motion: 12.6.2
+- @headlessui/react: 2.2.0
+- @heroicons/react: 2.2.0
+- @tabler/icons-react: 3.31.0
+- lucide-react: 0.485.0
+- react-icons: 5.5.0
+
+### Form Handling
+- react-hook-form: 7.55.0
+- @hookform/resolvers: 4.1.3
+- zod: 3.24.2
+
+### 3D Visualization
+- three: 0.176.0
+- @react-three/fiber: 9.0.0-alpha.8
+- @react-three/drei: 10.0.7
+- three-globe: 2.42.4
+
+### Data Fetching & State
+- @tanstack/react-query: 5.71.0
+
+### File Processing
+- pdf-parse: 1.1.1
+- mammoth: 1.9.0
+- papaparse: 5.5.2
+- xlsx: 0.18.5
+
+### Utilities
+- clsx: 2.1.1
+- tailwind-merge: 3.0.2
+- ioredis: 5.6.1
+- uuid: 11.1.0
+
+### Media Processing
+- youtubei.js: 13.4.0
+
+### Storage
+- @aws-sdk/client-s3: 3.777.0
+
+### Email
+- resend: 4.2.0
+
+### Calendar
+- @fullcalendar/core: 6.1.17
+- @fullcalendar/react: 6.1.17
+- @fullcalendar/timegrid: 6.1.17
+- @fullcalendar/interaction: 6.1.17
+
+## ARCHITECTURAL PATTERNS
+
+### Event-Sourcing
+- EventOrchestrator for complex workflows
+- Event-driven architecture for course generation
+- Dependency resolution between events
+
+### Repository Pattern
+- Data access abstractions
+- Separation of concerns
+
+### Factory Pattern
+- Module type creation based on content
+- Component generation based on context
+
+### Adapter Pattern
+- File format adapters for document processing
+- Authentication provider adapters
+
+### Strategy Pattern
+- Different AI model strategies based on task
+- Rendering strategies based on content type
+
+### Observer Pattern
+- Notification system implementation
+- Progress tracking and updates
+
+### Command Pattern
+- User action handling
+- Undo/redo functionality
+
+## CODE ORGANIZATION
+
+### Directory Structure
+- app/ - Next.js app router pages and layouts
+- components/ - Reusable UI components
+- actions/ - Server actions for data mutations
+- lib/ - Utility functions and shared logic
+- modules/ - Feature-specific module code
+- prisma/ - Database schema and migrations
+- public/ - Static assets
+- styles/ - Global styles
+- types/ - TypeScript type definitions
+- schema/ - Zod validation schemas
+- models/ - Core domain models
+
+### Code Standards
+- TypeScript for all source files
+- ESLint configuration for code quality
+- Consistent naming conventions
+- Component encapsulation
+- Proper error handling
+- Performance optimization practices
+- Accessibility standards compliance
+
+## INNOVATION HIGHLIGHTS
+
+1. Multi-Modal AI Processing Pipeline: Proprietary system combining LLMs with structured knowledge
+2. Adaptive Learning Path Creation: Automatically tailors content based on learner profiles
+3. Document Understanding System: Advanced architecture for extracting knowledge from various formats
+4. Real-time Collaborative Course Building: Multiple educators can simultaneously build courses
+5. Semantic Search and Retrieval: Contextual understanding of course materials
+6. Modular Component Architecture: Customizable UI components for rapid feature deployment
+7. Hybrid Content Generation: Combines AI with human expertise in seamless workflow
+8. Enterprise-Grade Authentication: Multi-factor, role-based security system
+9. Scalable Processing: Handles thousands of concurrent users
+10. Interactive 3D Learning Visualizations: Three.js-powered knowledge maps and concept visualizations
+
+This document provides an extensive technical overview of the AI Course Generator platform, detailing its architecture, features, technologies, and implementation details. 

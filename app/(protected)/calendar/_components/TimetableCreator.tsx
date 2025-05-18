@@ -54,12 +54,22 @@ export default function TimetableCreator({ courses }: TimetableCreatorProps) {
         }),
       });
 
+      // Clone the response so we can read it twice if needed
+      const responseClone = response.clone();
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to generate timetable');
+        let errorMessage = 'Failed to generate timetable';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (e) {
+          // If the error response cannot be parsed as JSON, use the status text
+          errorMessage = `Error: ${response.status} ${response.statusText}`;
+        }
+        throw new Error(errorMessage);
       }
 
-      const data = await response.json();
+      const data = await responseClone.json();
       setGeneratedEntries(data.entries);
     } catch (error) {
       console.error('Error generating timetable:', error);
@@ -231,40 +241,68 @@ export default function TimetableCreator({ courses }: TimetableCreatorProps) {
             <div className="bg-zinc-50 dark:bg-zinc-800/50 rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden">
               <div className="p-4 max-h-[400px] overflow-y-auto space-y-3">
                 {generatedEntries.map((entry, index) => {
-                  const day = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][entry.dayOfWeek];
-                  
-                  // Format times
-                  const startTime = new Date(entry.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                  const endTime = new Date(entry.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                  
-                  return (
-                    <div 
-                      key={index} 
-                      className="p-3 rounded-md shadow-sm border overflow-hidden"
-                      style={{ 
-                        backgroundColor: `${entry.color}15`,
-                        borderColor: `${entry.color}30`
-                      }}
-                    >
+                  // Safely access properties with fallbacks
+                  try {
+                    const dayOfWeek = typeof entry.dayOfWeek === 'number' && entry.dayOfWeek >= 0 && entry.dayOfWeek <= 6
+                      ? entry.dayOfWeek
+                      : 0;
+                    
+                    const day = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][dayOfWeek];
+                    
+                    // Safely format times
+                    let startTime = '';
+                    let endTime = '';
+                    
+                    try {
+                      if (entry.startTime) {
+                        startTime = new Date(entry.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                      }
+                      
+                      if (entry.endTime) {
+                        endTime = new Date(entry.endTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                      }
+                    } catch (timeError) {
+                      console.warn('Error formatting time:', timeError);
+                      startTime = 'Invalid time';
+                      endTime = 'Invalid time';
+                    }
+                    
+                    return (
                       <div 
-                        className="font-medium w-full whitespace-nowrap overflow-hidden text-ellipsis" 
-                        style={{ color: entry.color }}
+                        key={index} 
+                        className="p-3 rounded-md shadow-sm border overflow-hidden"
+                        style={{ 
+                          backgroundColor: `${entry.color || '#4285F4'}15`,
+                          borderColor: `${entry.color || '#4285F4'}30`
+                        }}
                       >
-                        {entry.title}
-                      </div>
-                      <div className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
-                        {day}, {startTime} - {endTime}
-                      </div>
-                      {entry.description && (
-                        <div className="text-sm mt-1">{entry.description}</div>
-                      )}
-                      {entry.scientificPrinciple && (
-                        <div className="text-xs mt-2 italic text-zinc-500 dark:text-zinc-400 border-t border-dashed pt-1 border-zinc-200 dark:border-zinc-700">
-                          <span className="font-medium">Scientific Basis:</span> {entry.scientificPrinciple}
+                        <div 
+                          className="font-medium w-full whitespace-nowrap overflow-hidden text-ellipsis" 
+                          style={{ color: entry.color || '#4285F4' }}
+                        >
+                          {entry.title || 'Untitled Event'}
                         </div>
-                      )}
-                    </div>
-                  );
+                        <div className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+                          {day || 'Unknown day'}, {startTime} - {endTime}
+                        </div>
+                        {entry.description && (
+                          <div className="text-sm mt-1">{entry.description}</div>
+                        )}
+                        {entry.scientificPrinciple && (
+                          <div className="text-xs mt-2 italic text-zinc-500 dark:text-zinc-400 border-t border-dashed pt-1 border-zinc-200 dark:border-zinc-700">
+                            <span className="font-medium">Scientific Basis:</span> {entry.scientificPrinciple}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  } catch (displayError) {
+                    console.error('Error displaying entry:', displayError, entry);
+                    return (
+                      <div key={index} className="p-3 rounded-md shadow-sm border border-red-200 dark:border-red-800/30 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400">
+                        Error displaying this entry. Please check console for details.
+                      </div>
+                    );
+                  }
                 })}
               </div>
               

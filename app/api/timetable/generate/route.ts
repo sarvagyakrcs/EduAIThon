@@ -49,16 +49,24 @@ User description: ${description}
 Courses to include:
 ${coursesText}
 
-Each entry in the JSON array should follow this exact structure (don't include comments in your response):
+Each entry in the JSON array MUST follow this EXACT structure (ALL FIELDS ARE REQUIRED unless otherwise noted):
 {
-  "title": "Course Name or Activity",
-  "description": "Brief description of what will be done",
-  "dayOfWeek": 1,
-  "startTime": "HH:MM",
-  "endTime": "HH:MM",
-  "courseId": "optional-course-id-if-applicable",
-  "scientificPrinciple": "optional scientific principle supporting this activity (only for wellness activities)"
+  "title": "Course Name or Activity", 
+  "description": "Brief description of what will be done", 
+  "dayOfWeek": 1, 
+  "startTime": "09:00", 
+  "endTime": "10:30", 
+  "courseId": "optional-course-id-if-applicable", 
+  "scientificPrinciple": "optional scientific principle" 
 }
+
+IMPORTANT JSON FORMATTING RULES:
+1. Use double quotes (not single quotes) around all string values and property names
+2. For time values, use the format "HH:MM" with quotes around the time string
+3. Do not use quotes around numeric values like dayOfWeek
+4. Ensure proper comma placement between properties and between array elements
+5. Do not add trailing commas at the end of property lists or arrays
+6. Follow valid JSON syntax exactly
 
 IMPORTANT INSTRUCTIONS:
 1. Parse the user's description carefully for mentions of:
@@ -83,12 +91,14 @@ IMPORTANT INSTRUCTIONS:
 
 5. For non-course activities mentioned in the description (like "college", "work", "study time", etc.), create entries with appropriate titles and descriptions
 
-Notes:
-- dayOfWeek should be a number: 0 = Sunday, 1 = Monday, etc.
-- startTime and endTime should be in 24-hour format, like "09:00" or "14:30"
+CRITICAL REQUIREMENTS:
+- Every entry MUST have title, description, dayOfWeek, startTime, and endTime fields
+- dayOfWeek MUST be a number: 0 = Sunday, 1 = Monday, etc.
+- startTime and endTime MUST be in 24-hour format, like "09:00" or "14:30"
 - Make sure to space out the entries appropriately across the week
 - Consider reasonable class durations (usually 1-2 hours) and include breaks
 - Ensure there are no time conflicts in the schedule
+- Do not add any additional fields not specified in the structure above
 
 IMPORTANT: Your response MUST be ONLY a valid parseable JSON array. Do not include any explanations, comments, or markdown formatting before or after the JSON.
 `;
@@ -103,7 +113,7 @@ IMPORTANT: Your response MUST be ONLY a valid parseable JSON array. Do not inclu
       body: JSON.stringify({
         model: "llama3-70b-8192",
         messages: [{ role: "user", content: prompt }],
-        temperature: 0.7,
+        temperature: 0.2, // Lower temperature for more consistent, predictable output
       }),
     });
 
@@ -131,31 +141,125 @@ IMPORTANT: Your response MUST be ONLY a valid parseable JSON array. Do not inclu
         if (jsonMatch) {
           let jsonStr = jsonMatch[0];
           
-          // Remove JS-style comments that might be in the response
-          jsonStr = jsonStr.replace(/\/\/.*$/gm, ""); // Remove single line comments
-          jsonStr = jsonStr.replace(/\/\*[\s\S]*?\*\//g, ""); // Remove multi-line comments
-          
-          // Clean up trailing commas which are valid in JS but not in JSON
-          jsonStr = jsonStr.replace(/,\s*([}\]])/g, "$1");
-          
-          console.log("Cleaned JSON:", jsonStr);
-          
           try {
-            timetableEntries = JSON.parse(jsonStr);
-          } catch (regexParseError) {
-            console.error("Regex parsing failed:", regexParseError);
+            // Advanced JSON cleaning
+            console.log("Attempting advanced JSON cleaning");
             
-            // Last resort: Try to manually fix common JSON issues
-            jsonStr = jsonStr.replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2":'); // Ensure property names are quoted
-            jsonStr = jsonStr.replace(/:\s*'([^']*)'/g, ': "$1"'); // Replace single quotes with double quotes
+            // 1. Remove any JS-style comments
+            jsonStr = jsonStr.replace(/\/\/.*$/gm, ""); // Remove single line comments
+            jsonStr = jsonStr.replace(/\/\*[\s\S]*?\*\//g, ""); // Remove multi-line comments
             
-            console.log("Manual clean attempt:", jsonStr);
-            timetableEntries = JSON.parse(jsonStr);
+            // 2. Fix incorrect quotes in time strings (e.g., "07":30" -> "07:30")
+            jsonStr = jsonStr.replace(/"(\d+)":(\d+)"/g, '"$1:$2"');
+            
+            // 3. Fix missing description field (e.g., "title": "Dinner", "Eat a...")
+            jsonStr = jsonStr.replace(/"([^"]+)",\s*"([^"]+)"/g, (match: string, p1: string, p2: string) => {
+              // Check if this looks like a missing "description": field
+              if (p1 && p2 && !p1.includes(":") && !p2.includes(":")) {
+                return `"${p1}", "description": "${p2}"`;
+              }
+              return match;
+            });
+            
+            // 4. Fix missing dayOfWeek field (e.g., "description": "...", 0, "startTime": "...")
+            jsonStr = jsonStr.replace(/("description"\s*:\s*"[^"]*"),\s*(\d+),\s*("startTime")/g, 
+              '$1, "dayOfWeek": $2, $3');
+            
+            // 5. Fix missing startTime field (e.g., "description": "...", "15:30", "endTime": "...")
+            jsonStr = jsonStr.replace(/("description"\s*:\s*"[^"]*"),\s*"(\d+:\d+)",\s*("endTime")/g, 
+              '$1, "startTime": "$2", $3');
+            
+            // 6. Ensure property names are quoted
+            jsonStr = jsonStr.replace(/([{,]\s*)([a-zA-Z0-9_]+)(\s*:)/g, '$1"$2"$3');
+            
+            // 7. Replace single quotes with double quotes for values
+            jsonStr = jsonStr.replace(/:\s*'([^']*)'/g, ': "$1"');
+            
+            // 8. Clean up trailing commas which are valid in JS but not in JSON
+            jsonStr = jsonStr.replace(/,\s*([}\]])/g, "$1");
+            
+            console.log("Cleaned JSON:", jsonStr);
+            
+            try {
+              timetableEntries = JSON.parse(jsonStr);
+            } catch (cleanParseError) {
+              console.error("Clean parsing failed:", cleanParseError);
+              
+              // Try a more aggressive approach - reconstruct the entire array
+              console.log("Attempting to reconstruct JSON by extracting valid objects");
+              
+              // Extract all potential JSON objects from the array
+              const objectsMatch = jsonStr.match(/\{[^{]*?\}/g);
+              if (objectsMatch) {
+                // Try to parse each object individually
+                const validObjects = [];
+                for (const objStr of objectsMatch) {
+                  try {
+                    // Do a final clean on each object
+                    let cleanObjStr = objStr;
+                    // Fix any remaining syntax errors in individual objects
+                    cleanObjStr = cleanObjStr.replace(/([{,]\s*)([a-zA-Z0-9_]+)(\s*:)/g, '$1"$2"$3');
+                    
+                    const obj = JSON.parse(cleanObjStr);
+                    validObjects.push(obj);
+                  } catch (e) {
+                    console.warn("Couldn't parse object:", objStr);
+                  }
+                }
+                
+                if (validObjects.length > 0) {
+                  console.log(`Reconstructed array with ${validObjects.length} valid objects`);
+                  timetableEntries = validObjects;
+                } else {
+                  throw new Error("Failed to extract any valid objects from JSON");
+                }
+              } else {
+                throw new Error("Failed to extract JSON objects from response");
+              }
+            }
+          } catch (advancedParseError: unknown) {
+            console.error("Advanced JSON parsing failed:", advancedParseError);
+            const errorMessage = advancedParseError instanceof Error 
+              ? advancedParseError.message 
+              : 'Unknown error';
+            throw new Error("Failed to parse JSON despite attempted repairs: " + errorMessage);
           }
         } else {
           throw new Error("Failed to extract JSON from response");
         }
       }
+      
+      // Validate that we have an array
+      if (!Array.isArray(timetableEntries)) {
+        throw new Error("API response is not an array of timetable entries");
+      }
+      
+      // Check if the array is empty
+      if (timetableEntries.length === 0) {
+        throw new Error("API returned an empty array of timetable entries");
+      }
+      
+      // Perform basic validation on each entry
+      timetableEntries = timetableEntries.filter(entry => {
+        if (!entry || typeof entry !== 'object') {
+          console.warn("Filtered out invalid entry (not an object):", entry);
+          return false;
+        }
+        
+        // Check for critical required fields
+        if (!entry.title) {
+          console.warn("Filtered out entry without title:", entry);
+          return false;
+        }
+        
+        return true;
+      });
+      
+      // Ensure we still have entries after filtering
+      if (timetableEntries.length === 0) {
+        throw new Error("All timetable entries were invalid");
+      }
+      
     } catch (error) {
       console.error("Failed to parse AI response:", error);
       console.error("Raw response was:", rawResponse);
@@ -167,41 +271,109 @@ IMPORTANT: Your response MUST be ONLY a valid parseable JSON array. Do not inclu
 
     // Process entries to ensure they have the right format
     const processedEntries = timetableEntries.map((entry: any) => {
-      // Find matching course if courseId is not provided but title matches a course name
-      let courseId = entry.courseId;
-      if (!courseId && entry.title) {
-        const matchedCourse = courses.find(
-          (c) => c.name.toLowerCase() === entry.title.toLowerCase()
-        );
-        if (matchedCourse) {
-          courseId = matchedCourse.id;
+      try {
+        // Validate essential properties
+        if (!entry) {
+          console.warn("Skipping null or undefined entry");
+          return null;
         }
+        
+        if (typeof entry !== 'object') {
+          console.warn("Skipping non-object entry:", entry);
+          return null;
+        }
+        
+        // Essential properties with defaults
+        const title = typeof entry.title === 'string' ? entry.title : "Untitled Event";
+        const description = typeof entry.description === 'string' ? entry.description : "";
+        
+        // Find matching course if courseId is not provided but title matches a course name
+        let courseId = entry.courseId;
+        if (!courseId && title) {
+          const matchedCourse = courses.find(
+            (c) => c.name.toLowerCase() === title.toLowerCase()
+          );
+          if (matchedCourse) {
+            courseId = matchedCourse.id;
+          }
+        }
+
+        // Safely get dayOfWeek or default to 0 (Sunday)
+        const dayOfWeek = typeof entry.dayOfWeek === 'number' ? 
+          Math.min(Math.max(0, entry.dayOfWeek), 6) : 0; // Clamp between 0-6
+        
+        // Default to current time if startTime or endTime is missing
+        const currentDate = new Date();
+        const defaultTime = `${currentDate.getHours()}:${currentDate.getMinutes().toString().padStart(2, '0')}`;
+        
+        // Handle string or date objects for times
+        let startTimeStr = entry.startTime;
+        let endTimeStr = entry.endTime;
+        
+        // Convert Date objects to strings if needed
+        if (startTimeStr instanceof Date) {
+          startTimeStr = `${startTimeStr.getHours()}:${startTimeStr.getMinutes().toString().padStart(2, '0')}`;
+        }
+        
+        if (endTimeStr instanceof Date) {
+          endTimeStr = `${endTimeStr.getHours()}:${endTimeStr.getMinutes().toString().padStart(2, '0')}`;
+        }
+        
+        // Ensure we have strings
+        startTimeStr = typeof startTimeStr === 'string' ? startTimeStr : defaultTime;
+        endTimeStr = typeof endTimeStr === 'string' ? endTimeStr : defaultTime;
+        
+        // Validate time format (HH:MM)
+        const timeRegex = /^([0-1]?[0-9]|2[0-3]):([0-5][0-9])$/;
+        if (!timeRegex.test(startTimeStr)) {
+          console.warn(`Invalid startTime format: ${startTimeStr}, using default`);
+          startTimeStr = defaultTime;
+        }
+        
+        if (!timeRegex.test(endTimeStr)) {
+          console.warn(`Invalid endTime format: ${endTimeStr}, using default`);
+          endTimeStr = defaultTime;
+        }
+        
+        // Parse time values
+        const [hours, minutes] = startTimeStr.split(':').map(Number);
+        const [endHours, endMinutes] = endTimeStr.split(':').map(Number);
+        
+        // Use a base date (e.g., Jan 1, 2023) + day of week for consistency
+        const baseDate = new Date(2023, 0, 1 + dayOfWeek);
+        
+        const startTime = new Date(baseDate);
+        startTime.setHours(hours, minutes, 0, 0);
+        
+        const endTime = new Date(baseDate);
+        endTime.setHours(endHours, endMinutes, 0, 0);
+        
+        // If end time is before start time, add 24 hours to end time
+        if (endTime < startTime) {
+          endTime.setDate(endTime.getDate() + 1);
+        }
+
+        // Color validation - ensure it's a valid hex color or generate one
+        let color = entry.color;
+        if (!color || typeof color !== 'string' || !color.match(/^#([0-9A-F]{3}){1,2}$/i)) {
+          color = generateRandomColor();
+        }
+
+        return {
+          title,
+          description,
+          dayOfWeek,
+          startTime,
+          endTime,
+          courseId: courseId || null,
+          color,
+          scientificPrinciple: typeof entry.scientificPrinciple === 'string' ? entry.scientificPrinciple : null,
+        };
+      } catch (error) {
+        console.error("Error processing entry:", error, entry);
+        return null;
       }
-
-      // Convert time strings to Date objects
-      const [hours, minutes] = entry.startTime.split(':').map(Number);
-      const [endHours, endMinutes] = entry.endTime.split(':').map(Number);
-      
-      // Use a base date (e.g., Jan 1, 2023) + day of week for consistency
-      const baseDate = new Date(2023, 0, 1 + entry.dayOfWeek);
-      
-      const startTime = new Date(baseDate);
-      startTime.setHours(hours, minutes, 0, 0);
-      
-      const endTime = new Date(baseDate);
-      endTime.setHours(endHours, endMinutes, 0, 0);
-
-      return {
-        title: entry.title,
-        description: entry.description || "",
-        dayOfWeek: entry.dayOfWeek,
-        startTime,
-        endTime,
-        courseId: courseId || null,
-        color: entry.color || generateRandomColor(),
-        scientificPrinciple: entry.scientificPrinciple || null,
-      };
-    });
+    }).filter(entry => entry !== null); // Remove any null entries from processing errors
 
     return NextResponse.json({ entries: processedEntries });
   } catch (error) {
